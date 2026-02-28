@@ -47,8 +47,9 @@ if os.path.exists(configuration_file):
     with open(configuration_file, "r", encoding="utf-8") as f:
         configuration = json.load(f)
 else:
+    messagebox.showwarning("Uyarı", "Yapılandırma dosyası başka bir yere taşınmış veya silinmiş. Bu nedenle ayarlar sıfırlandı.")
     configuration = {
-        "username": "Player",
+        "username": "Oyuncu",
         "version": "1.21.11",
         "java_path": None,
         "fabric": "0.18.4"
@@ -87,12 +88,13 @@ def select_java():
     from tkinter import filedialog
     path = filedialog.askopenfilename(
         title="Java Yürütülebilir Dosyası Seç",
-        filetypes=[("Java Executable", "java.exe")])
+        filetypes=[("Java Yürütülebilir Dosyası", "java.exe javaw.exe")])
     if path:
         global java_path
         java_path = path
         java_button.config(fg="#0040bf")
         ToolTip(java_button, "Java: Seçildi" if java_path else "Java: Seçilmedi")
+        save_settings()
 
 def launch():
     threading.Thread(target=launch_game, daemon=True).start()
@@ -104,6 +106,7 @@ def launch_game():
         
     if not java_path:
         messagebox.showerror("Hata", "Java yürütülebilir dosyası seçilmedi. Java yürütülebilir dosyası olmadan Minecraft çalışamaz.")
+        progress_label.pack_forget()
         return
     
     username = username_entry.get()
@@ -132,10 +135,12 @@ def launch_game():
 
     if not username:
         messagebox.showerror("Hata", "Lütfen bir kullanıcı adı girin.")
+        progress_label.pack_forget()
         return
 
     if not version:
         messagebox.showerror("Hata", "Lütfen bir sürüm seçin.")
+        progress_label.pack_forget()
         return
 
     try:
@@ -166,7 +171,7 @@ def launch_game():
             version, mc_dir, options
         )
         
-        progress_label.config(text="")
+        progress_label.config(text="Başlatılıyor...")
         win.withdraw()
         process = subprocess.Popen(command)
         
@@ -199,7 +204,7 @@ def install_fabric(mc_version, loader):
     }
 
     if mc_version not in installed:
-        messagebox.showerror("Hata", f"Fabric kurulabilmesi için önce vanilla {mc_version} kurulmalıdır.")
+        messagebox.showerror("Hata", f"Fabric kurulabilmesi için önce Vanilla {mc_version} kurulmalıdır.")
         return False
 
     if version_id in installed:
@@ -221,7 +226,7 @@ def set_status(text):
         
     win.update_idletasks()
     
-def save_on_exit():
+def save_settings():
     username = username_entry.get()
     version = version_combobox.get()
     fabric = fabric_combobox.get()
@@ -236,10 +241,12 @@ def save_on_exit():
     with open(configuration_file, "w", encoding="utf-8") as f:
         json.dump(configuration, f, ensure_ascii=False, indent=4)
         
+def save_on_exit():
+    save_settings()
     win.destroy()
     
 def show_about():
-    messagebox.showinfo("Hakkında", "BukiLauncher v1.0.0\n© Telif hakkı 2025-2026 Buğra US")
+    messagebox.showinfo("Hakkında", "BukiLauncher v1.0.5\n© telif hakkı 2025-2026 Buğra US")
 
 win = tk.Tk()
 win.title("BukiLauncher")
@@ -267,16 +274,18 @@ tk.Label(win, text="BukiLauncher", font=("Segoe UI", 12, "bold")).pack(padx=20, 
 input_frame = tk.Frame(win, relief="raised", padx=10, pady=10, bd=1)
 input_frame.pack(padx=20, pady=20, fill="x")
 
-tk.Label(input_frame, text="Kullanıcı Adı: ").grid(row=0, column=0, padx=(0, 5), pady=(0, 5))
+tk.Label(input_frame, text="Kullanıcı adı: ").grid(row=0, column=0, padx=(0, 5), pady=(0, 5))
 username_entry = tk.Entry(input_frame, width=25)
 username_entry.grid(row=0, column=1, pady=(0, 5))
+username_entry.bind("<KeyRelease>", lambda e: save_settings())
 
 tk.Label(input_frame, text="Sürüm: ").grid(row=1, column=0, padx=(0, 5))
 
 version_combobox = ttk.Combobox(input_frame, values=versions, state="readonly", width=20)
 version_combobox.grid(row=1, column=1, sticky="ew")
+version_combobox.bind("<<ComboboxSelected>>", lambda e: save_settings())
 
-tk.Label(input_frame, text="Fabric Loader:").grid(row=2, column=0, padx=(0, 5), pady=(5, 0))
+tk.Label(input_frame, text="Fabric loader:").grid(row=2, column=0, padx=(0, 5), pady=(5, 0))
 
 fabric_loaders_raw = minecraft_launcher_lib.fabric.get_all_loader_versions()
 fabric_loaders = [v["version"] for v in fabric_loaders_raw]
@@ -284,6 +293,7 @@ fabric_loaders = [v["version"] for v in fabric_loaders_raw]
 fabric_combobox = ttk.Combobox(input_frame, values=fabric_loaders, state="readonly", width=20)
 fabric_combobox.grid(row=2, column=1, sticky="ew", pady=(5, 0))
 fabric_combobox.set(fabric_loaders[0])
+fabric_combobox.bind("<<ComboboxSelected>>", lambda e: save_settings())
 
 toolbar_frame = tk.Frame(win)
 toolbar_frame.pack(fill="x")
@@ -316,7 +326,7 @@ def select_warning(event):
     selected = version_combobox.get().replace(" (Fabric)", "")
     
     if version_tuple(selected) < version_tuple(threshold_version):
-        messagebox.showwarning("Uyarı", "Bu sürüm çok eski olduğu için seçtiğiniz Java ile düzgün çalışmayabilir.")
+        messagebox.showwarning("Uyarı", "Bu sürüm çok eski olduğu için seçtiğiniz Java yürütülebilir dosyası ile düzgün çalışmayabilir.")
 
 def on_version_change(event):
     selected = version_combobox.get()
@@ -328,7 +338,6 @@ def on_version_change(event):
 
 version_combobox.bind("<<ComboboxSelected>>", select_warning)
 version_combobox.bind("<<ComboboxSelected>>", on_version_change, add="+")
-win.protocol("WM_DELETE_WINDOW", save_on_exit)
 
 ToolTip(start_button, "Başlat")
 ToolTip(dir_button, "Minecraft Klasörünü Aç")
@@ -340,4 +349,5 @@ if version_combobox.get().endswith("(Fabric)"):
 else:
     fabric_combobox.config(state="disabled")
 
+win.protocol("WM_DELETE_WINDOW", save_on_exit)
 win.mainloop()
