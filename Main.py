@@ -28,25 +28,27 @@ if os.path.exists(configuration_file):
             configuration = json.load(f)
             
         if configuration["fabric"] is None:
-            configuration["fabric"] = "Yok"
-    except:
+            configuration["fabric"] = "Hiçbiri"
+    except json.JsonDecodeError:
         messagebox.showwarning("Uyarı", "Yapılandırma dosyası bozuk. Bu nedenle ayarlar sıfırlandı.")
         configuration = {
             "username": "Oyuncu",
-            "version": "26.1",
+            "version": "26.1.1",
             "java_path": None,
             "fabric": None,
-            "snapshots": False
+            "snapshots": False,
+            "hide_when_start": True
         }
     
 else:
     messagebox.showwarning("Uyarı", "Yapılandırma dosyası başka bir yere taşınmış veya silinmiş. Bu nedenle ayarlar sıfırlandı.")
     configuration = {
         "username": "Oyuncu",
-        "version": "26.1",
+        "version": "26.1.1",
         "java_path": None,
         "fabric": None,
-        "snapshots": False
+        "snapshots": False,
+        "hide_when_start": True
     }
     
 if configuration["snapshots"]:
@@ -121,49 +123,52 @@ def launch():
 
 def launch_game():
     global process, mc_dir
-    
-    progress_label.pack(pady=(0, 20), padx=20, fill="x")
-        
-    if not java_path:
-        messagebox.showerror("Hata", "Java yürütülebilir dosyası seçilmedi. Java yürütülebilir dosyası olmadan Minecraft çalışamaz.")
-        progress_label.pack_forget()
-        return
-    
-    username = username_entry.get()
-    version = version_combobox.get()
-    
-    loader = fabric_combobox.get()
-
-    if loader != "Yok":
-        mc_version = version
-        version_id = f"fabric-loader-{loader}-{mc_version}"
-
-        installed = {
-            v["id"]
-            for v in minecraft_launcher_lib.utils.get_installed_versions(mc_dir)
-        }
-
-        if version_id not in installed:
-            progress_label.config(text="Fabric kuruluyor…")
-            ok = install_fabric(mc_version, loader)
-            if not ok:
-                progress_label.config(text="")
-                progress_label.pack_forget()
-                return
-
-        version = version_id
-
-    if not username:
-        messagebox.showerror("Hata", "Lütfen bir kullanıcı adı girin.")
-        progress_label.pack_forget()
-        return
-
-    if not version:
-        messagebox.showerror("Hata", "Lütfen bir sürüm seçin.")
-        progress_label.pack_forget()
-        return
-
     try:
+        progress_label.pack(pady=(0, 20), padx=20, fill="x")
+        
+        if process and process.poll() is None:
+            messagebox.showwarning("Uyarı", "Minecraft zaten çalışıyor.")
+            progress_label.pack_forget()
+            return
+        
+        if not java_path:
+            messagebox.showerror("Hata", "Java yürütülebilir dosyası seçilmedi. Java yürütülebilir dosyası olmadan Minecraft çalışamaz.")
+            progress_label.pack_forget()
+            return
+        
+        username = username_entry.get()
+        version = version_combobox.get()
+        loader = fabric_combobox.get()
+
+        if loader != "Hiçbiri":
+            mc_version = version
+            version_id = f"fabric-loader-{loader}-{mc_version}"
+
+            installed = {
+                v["id"]
+                for v in minecraft_launcher_lib.utils.get_installed_versions(mc_dir)
+            }
+
+            if version_id not in installed:
+                progress_label.config(text="Fabric kuruluyor…")
+                ok = install_fabric(mc_version, loader)
+                if not ok:
+                    progress_label.config(text="")
+                    progress_label.pack_forget()
+                    return
+
+            version = version_id
+
+        if not username:
+            messagebox.showerror("Hata", "Lütfen bir kullanıcı adı girin.")
+            progress_label.pack_forget()
+            return
+
+        if not version:
+            messagebox.showerror("Hata", "Lütfen bir sürüm seçin.")
+            progress_label.pack_forget()
+            return
+
         installed_versions = {
             v["id"]
             for v in minecraft_launcher_lib.utils.get_installed_versions(mc_dir)
@@ -186,7 +191,7 @@ def launch_game():
             "token": "",
             "executablePath": java_path
         }
-        
+
         command = minecraft_launcher_lib.command.get_minecraft_command(
             version, mc_dir, options
         )
@@ -199,44 +204,45 @@ def launch_game():
 
         if isinstance(command, str):
             command = command.split()
-        
+
         progress_label.config(text="Başlatılıyor...")
-
-        win.after(0, win.withdraw)
-
-        process = subprocess.Popen(command)
+        if hide_when_start.get():
+            win.after(0, win.withdraw)
         
-    except Exception as e:
-        messagebox.showerror("Hata", f"Başlatılırken bir hata oluştu:\n{str(e)}")
+        process = subprocess.Popen(command)
 
-    def wait_game():
-        global process
+        def wait_game():
+            global process
+            try:
+                if process is None:
+                    return
+                process.wait()
+            except Exception:
+                error_handler(*sys.exc_info(), parent=win)
+            finally:
+                win.after(0, lambda: (
+                    win.deiconify(),
+                    progress_label.pack_forget()
+                ))
 
-        if process is None:
-            return
-
-        try:
-            process.wait()
-        finally:
-            win.after(0, lambda: (
-                win.deiconify(),
-                progress_label.pack_forget()
-            ))
-
-    if process is not None:
-        threading.Thread(target=wait_game, daemon=True).start()
+        if process is not None:
+            threading.Thread(target=wait_game, daemon=True).start()
+    
+    except Exception:
+        error_handler(*sys.exc_info(), parent=win)
+        progress_label.pack_forget()
 
 def install_fabric(mc_version, loader):
     mc_dir = minecraft_launcher_lib.utils.get_minecraft_directory()
-
+    
     try:
         minecraft_launcher_lib.fabric.install_fabric(
             minecraft_version=mc_version,
             loader_version=loader,
             minecraft_directory=mc_dir
         )
-    except Exception as e:
-        messagebox.showerror("Hata", f"Fabric kurulamadı:\n{e}")
+    except Exception:
+        error_handler(*sys.exc_info(), parent=win)
         return False
 
     return True
@@ -254,8 +260,9 @@ def save_settings():
     version = version_combobox.get()
     fabric = fabric_combobox.get()
     snapshots = show_snapshots.get()
+    hide = hide_when_start.get()
     
-    if fabric.lower() == "yok":
+    if fabric.lower() == "hiçbiri":
         fabric = None
     
     configuration = {
@@ -263,7 +270,8 @@ def save_settings():
         "version": version,
         "java_path": java_path,
         "fabric": fabric,
-        "snapshots": snapshots
+        "snapshots": snapshots,
+        "hide_when_start": hide
     }
     
     with open(configuration_file, "w", encoding="utf-8") as f:
@@ -274,9 +282,9 @@ def save_on_exit():
     win.destroy()
     
 def show_about():
-    messagebox.showinfo("Hakkında", "BukiLauncher v1.1.0\n© telif hakkı 2026 Buğra US")
+    messagebox.showinfo("Hakkında", "BukiLauncher v1.1.5\n© telif hakkı 2026 Buğra US")
     
-def change_snapshot_shown(*args):
+def update_settings(*args):
     global mc_versions
     
     if show_snapshots.get():
@@ -295,17 +303,18 @@ def change_snapshot_shown(*args):
         
     version_combobox.config(values=mc_versions)
     version_combobox.set(mc_versions[0])
+    
+    save_settings()
 
 win = tk.Tk()
 win.title("BukiLauncher")
 win.resizable(False, False)
 
-def report_callback_exception(exc_type, exc_value, exc_traceback):
-    error_handler(exc_type, exc_value, exc_traceback, parent=win)
-
-win.report_callback_exception = report_callback_exception
+sys.excepthook = lambda t, v, tb: error_handler(t, v, tb, parent=win)
+win.report_callback_exception = lambda t, v, tb: error_handler(t, v, tb, parent=win)
 
 show_snapshots = tk.BooleanVar(value=configuration["snapshots"])
+hide_when_start = tk.BooleanVar(value=configuration["hide_when_start"])
 
 if hasattr(sys, "_MEIPASS"):
     icon_path = os.path.join(sys._MEIPASS, "Icon.ico")
@@ -332,6 +341,9 @@ tk.Label(win, text="BukiLauncher", font=("Segoe UI", 12, "bold")).pack(padx=20, 
 input_frame = tk.Frame(win, relief="raised", padx=10, pady=10, bd=1)
 input_frame.pack(padx=20, pady=20, fill="x")
 
+opt_frame = tk.Frame(win, relief="raised", padx=10, pady=10, bd=1)
+opt_frame.pack(padx=20, pady=(0, 20), fill="x")
+
 tk.Label(input_frame, text="Kullanıcı adı: ").grid(row=0, column=0, padx=(0, 5), pady=(0, 5))
 username_entry = tk.Entry(input_frame, width=25)
 username_entry.grid(row=0, column=1, pady=(0, 5))
@@ -349,15 +361,18 @@ fabric_loaders_raw = minecraft_launcher_lib.fabric.get_all_loader_versions()
 if isinstance(fabric_loaders_raw, tuple):
     fabric_loaders_raw = fabric_loaders_raw[0]
 
-fabric_loaders = ["Yok"] + [v["version"] for v in fabric_loaders_raw]
+fabric_loaders = ["Hiçbiri"] + [v["version"] for v in fabric_loaders_raw]
 
 fabric_combobox = ttk.Combobox(input_frame, values=fabric_loaders, state="readonly", width=20)
 fabric_combobox.grid(row=2, column=1, sticky="ew", pady=(5, 0))
     
 fabric_combobox.bind("<<ComboboxSelected>>", lambda e: save_settings())
 
-snapshot_checkbutton = ttk.Checkbutton(input_frame, text="Snapshot'ları göster", variable=show_snapshots, command=change_snapshot_shown)
-snapshot_checkbutton.grid(row=3, column=0, columnspan=2, pady=(5, 0))
+snapshot_checkbutton = ttk.Checkbutton(opt_frame, text="Snapshot'ları göster", variable=show_snapshots, command=update_settings)
+snapshot_checkbutton.pack(pady=(0, 5))
+
+hide_when_start_checkbutton = ttk.Checkbutton(opt_frame, text="Oyun başlatıldığında pencereyi kapat", variable=hide_when_start, command=update_settings)
+hide_when_start_checkbutton.pack()
 
 toolbar_frame = tk.Frame(win)
 toolbar_frame.pack(fill="x")
@@ -409,17 +424,17 @@ def select_warning(event):
             "Bu sürüm çok eski olduğu için seçtiğiniz Java yürütülebilir dosyası ile düzgün çalışmayabilir."
         )
         
-version_combobox.bind("<<ComboboxSelected>>", select_warning)
+version_combobox.bind("<<ComboboxSelected>>", select_warning, add="+")
 
 ToolTip(start_button, "Başlat")
-ToolTip(dir_button, "Minecraft Klasörünü Aç")
-ToolTip(java_button, "Java: Seçildi" if java_path else "Java: Seçilmedi")
+ToolTip(dir_button, "Minecraft klasörünü aç")
+ToolTip(java_button, "Java: seçildi" if java_path else "Java: seçilmedi")
 ToolTip(about_button, "Hakkında")
 
 if configuration["fabric"] in fabric_loaders:
     fabric_combobox.set(configuration["fabric"])
 else:
-    fabric_combobox.set("Yok")
+    fabric_combobox.set("Hiçbiri")
 
 win.protocol("WM_DELETE_WINDOW", save_on_exit)
 win.mainloop()

@@ -1,7 +1,8 @@
 {
     "username": "Oyuncu",
-    "version": "26.1",
+    "version": "26.1.1",
     "java_path": null,
     "fabric": null,
-    "snapshots": false
+    "snapshots": false,
+    "hide_when_start": true
 }

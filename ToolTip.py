@@ -7,7 +7,7 @@ class ToolTip:
         self.offset_x = offset_x
         self.offset_y = offset_y
         self.shown = shown
-        self.label = tk.Label(widget.winfo_toplevel(), text=text, bg="#ffffbf", relief="raised", bd=1)
+        self.label = tk.Label(widget.winfo_toplevel(), text=text, bg="#ffffbf", fg="#000000", relief="raised", bd=1, padx=5, pady=2)
         self.label.place_forget()
         widget.bind("<Enter>", self.show_tooltip)
         widget.bind("<Leave>", self.hide_tooltip)
