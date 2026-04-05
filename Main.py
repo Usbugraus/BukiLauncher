@@ -299,10 +299,8 @@ def update_settings(*args):
             for v in minecraft_launcher_lib.utils.get_version_list()
             if v["type"] == "release"
         ]
-        version_combobox.set(mc_versions[0])
         
     version_combobox.config(values=mc_versions)
-    version_combobox.set(mc_versions[0])
     
     save_settings()
 
