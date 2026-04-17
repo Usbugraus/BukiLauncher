@@ -1,0 +1,42 @@
+{
+    "türkçe": [
+        "Başlat",
+        "Minecraft klasörünü aç",
+        "Java: seçildi",
+        "Java: seçilmedi",
+        "Ayarlar",
+        "Hakkında",
+        "Fabric indiriliyor...",
+        "Minecraft indiriliyor..."
+    ],
+    "english": [
+        "Launch",
+        "Open Minecraft folder",
+        "Java: selected",
+        "Java: not selected",
+        "Settings",
+        "About",
+        "Downloading Fabric...",
+        "Downloading Minecraft..."
+    ],
+    "deutsch": [
+        "Start",
+        "Minecraft-Ordner öffnen",
+        "Java: ausgewählt",
+        "Java: nicht ausgewählt",
+        "Einstellungen",
+        "Über",
+        "Fabric wird heruntergeladen...",
+        "Minecraft wird heruntergeladen..."
+    ],
+    "русский": [
+        "Запустить",
+        "Открыть папку Minecraft",
+        "Java: выбрано",
+        "Java: не выбрано",
+        "Настройки",
+        "О программе",
+        "Загрузка Fabric...",
+        "Загрузка Minecraft..."
+    ]
+}

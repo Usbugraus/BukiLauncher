@@ -1,8 +1,9 @@
 {
-    "username": "Oyuncu",
-    "version": "26.1.1",
+    "username": "Player",
+    "version": "26.1.2",
     "java_path": null,
     "fabric": null,
     "snapshots": false,
-    "hide_when_start": true
+    "hide_when_start": true,
+    "language": "english"
 }

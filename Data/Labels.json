@@ -1,0 +1,22 @@
+{
+    "türkçe": [
+        "Kullanıcı adı: ",
+        "Sürüm: ",
+        "Fabric loader: "
+    ],
+    "english": [
+        "Username: ",
+        "Version: ",
+        "Fabric loader: "
+    ],
+    "deutsch": [
+        "Benutzername: ",
+        "Version: ",
+        "Fabric-Loader: "
+    ],
+    "русский": [
+        "Имя пользователя: ",
+        "Версия: ",
+        "Fabric загрузчик: "
+    ]
+}

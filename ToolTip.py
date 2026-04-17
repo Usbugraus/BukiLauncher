@@ -1,13 +1,19 @@
 import tkinter as tk
+from tkinter import ttk
 
 class ToolTip:
     def __init__(self, widget, text, offset_x=10, offset_y=10, shown=True):
+        style = ttk.Style()
+        style.theme_use("default")
+
+        style.configure("ToolTip.TLabel", background="#ffffbf", foreground="#000000", relief=tk.RAISED, borderwidth=1, padding=(5, 2))
+
         self.widget = widget
         self.text = text
         self.offset_x = offset_x
         self.offset_y = offset_y
         self.shown = shown
-        self.label = tk.Label(widget.winfo_toplevel(), text=text, bg="#ffffbf", fg="#000000", relief="raised", bd=1, padx=5, pady=2)
+        self.label = ttk.Label(widget.winfo_toplevel(), text=text, style="ToolTip.TLabel")
         self.label.place_forget()
         widget.bind("<Enter>", self.show_tooltip)
         widget.bind("<Leave>", self.hide_tooltip)
