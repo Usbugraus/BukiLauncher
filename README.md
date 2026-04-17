@@ -54,7 +54,7 @@ With BukiLauncher, you can download and play any Vanilla, Snapshot, and Fabric v
 You don't need to install BukiLauncher. If you downloaded it as an application, extract the `.zip` file and run the application.
 
 ## Installing and Managing Mods
-To install mods in BukiLauncher; copy the mod you downloaded, then click the "Show Minecraft Folder" button and enter the `mods` folder in the window that opens. Paste the mod you copied.
+To install mods in BukiLauncher; copy the mod you downloaded, then click the "Open Minecraft Folder" button and enter the `mods` folder in the window that opens. Paste the mod you copied.
 
 You can manage your mods in this folder.
 
