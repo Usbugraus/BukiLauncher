@@ -18,7 +18,7 @@ Modlarınızı bu klasörde yönetebilirsiniz.
 
 **Not:** Fabric aktif değilse modlar çalışmayacaktır.
 
-## Sürümleri, Dünyaları ve Gölgelendiricileri Yönetme
+## Dünyaları ve Gölgelendiricileri Yönetme
 ### Dünyaları Yönetme
 Minecraft'taki dünyalarınızı yönetmek için; "Minecraft klasörünü aç" düğmesine tıklayın ve açılan pencereden `saves` klasörüne girin. Burada dünyalarınız göreceksiniz.
 
@@ -54,7 +54,7 @@ You can manage your mods in this folder.
 
 **Note:** Mods will not work if Fabric is not active.
 
-## Managing Versions, Worlds, and Shaders
+## Managing Worlds, and Shaders
 ### Managing Worlds
 To manage your worlds in Minecraft; Click the "Open Minecraft folder" button and enter the `saves` folder in the window that opens. Here you will see your worlds.
 
@@ -90,7 +90,7 @@ In diesem Ordner kannst du deine Mods verwalten.
 
 **Hinweis:** Mods funktionieren nicht, wenn Fabric nicht aktiviert ist.
 
-## Versionen, Welten und Shader verwalten
+## Welten und Shader verwalten
 ### Welten verwalten
 Um deine Welten in Minecraft zu verwalten; Klicken Sie auf die Schaltfläche "Minecraft-Ordner öffnen" und öffnen Sie im sich öffnenden Fenster den Ordner `saves`. Hier sehen Sie Ihre Welten.
 
