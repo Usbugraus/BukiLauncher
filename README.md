@@ -24,17 +24,11 @@ Minecraft'taki dünyalarınızı yönetmek için; "Minecraft klasörünü aç" d
 
 **Not:** Dünyanızın dosyalarını değiştirirseniz dünyanız bozulabilir.
 
-### Sürümleri Yönetme
-BukiLauncher'dan indirdiğiniz Minecraft sürümlerini yönetmek için; "Minecraft klasörünü aç" düğmesine tıklayın ve açılan pencereden `versions` klasörüne girin. Burada indirdiğiniz sürümleri göreceksiniz.
-
-**Not:** Sürümlerin dosyalarını değiştirirseniz sürüm bozulabilir. düzeltmek için de sürümü silip yeniden indirmeniz gerekir.
-
 ### Gölgelendiricileri Yönetme
-BukiLauncher'dan indirdiğiniz Minecraft sürümlerini yönetmek için; "Minecraft klasörünü aç" düğmesine tıklayın ve açılan pencereden `versions` klasörüne girin. Burada kurduğunuz gögelendirici paketlerini göreceksiniz.
+BukiLauncher'dan indirdiğiniz Minecraft sürümlerini yönetmek için; "Minecraft klasörünü aç" düğmesine tıklayın ve açılan pencereden `shaderpacks` klasörüne girin. Burada kurduğunuz gögelendirici paketlerini göreceksiniz.
 
 Gölgelendirici paketi kurmak için; indirdiğiniz gölgelendirici paketini kopyalayın, "Minecraft klasörünü aç" düğmesine tıklayın ve açılan pencereden `shaderpacks` klasörüne girin. Kopyaladığınız gölgelendirici paketini yapıştırın.
 
-***
 
 Eğer BukiLauncher ile ilgili bir sorununuz varsa GitHub sorunu açabilirsiniz.
 
@@ -66,17 +60,11 @@ To manage your worlds in Minecraft; Click the "Open Minecraft folder" button and
 
 **Note:** Modifying your world's files may corrupt your world.
 
-### Managing Versions
-To manage Minecraft versions downloaded from BukiLauncher; click the "Open Minecraft folder" button and enter the `versions` folder in the window that opens. Here you will see the versions you have downloaded.
-
-**Note:** Modifying the version files may corrupt the version. To fix this, you need to delete the version and download it again.
-
 ### Managing Shaders
-To manage Minecraft versions downloaded from BukiLauncher; click the "Open Minecraft folder" button and enter the `versions` folder in the window that opens. Here you will see the shader packs you have installed.
+To manage Minecraft versions downloaded from BukiLauncher; click the "Open Minecraft folder" button and enter the `shaderpacks` folder in the window that opens. Here you will see the shader packs you have installed.
 
 To install a shader pack; copy the shader pack you downloaded, click the "Open Minecraft folder" button and enter the `shaderpacks` folder in the window that opens. Paste the shader pack you copied.
 
-***
 
 If you have a problem with BukiLauncher, you can open a GitHub issue.
 
@@ -96,7 +84,7 @@ Mit BukiLauncher kannst du alle gewünschten Vanilla-, Snapshot- und Fabric-Vers
 BukiLauncher muss nicht installiert werden. Wenn du ihn als Anwendung heruntergeladen hast, entpacke die .zip-Datei und starte die Anwendung.
 
 ## Mods installieren und verwalten
-Um Mods in BukiLauncher zu installieren, kopiere den heruntergeladenen Mod, klicke dann auf die Schaltfläche „Minecraft-Ordner anzeigen“ und öffne im sich öffnenden Fenster den Ordner „mods“. Füge den kopierten Mod ein.
+Um Mods in BukiLauncher zu installieren, kopiere den heruntergeladenen Mod, klicke dann auf die Schaltfläche "Minecraft-Ordner anzeigen" und öffne im sich öffnenden Fenster den Ordner `mods`. Füge den kopierten Mod ein.
 
 In diesem Ordner kannst du deine Mods verwalten.
 
@@ -104,20 +92,14 @@ In diesem Ordner kannst du deine Mods verwalten.
 
 ## Versionen, Welten und Shader verwalten
 ### Welten verwalten
-Um deine Welten in Minecraft zu verwalten; Klicken Sie auf die Schaltfläche „Minecraft-Ordner öffnen“ und öffnen Sie im sich öffnenden Fenster den Ordner „saves“. Hier sehen Sie Ihre Welten.
+Um deine Welten in Minecraft zu verwalten; Klicken Sie auf die Schaltfläche "Minecraft-Ordner öffnen" und öffnen Sie im sich öffnenden Fenster den Ordner `saves`. Hier sehen Sie Ihre Welten.
 
 **Hinweis:** Das Bearbeiten der Weltdateien kann Ihre Welt beschädigen.
 
-### Versionen verwalten
-Um die von BukiLauncher heruntergeladenen Minecraft-Versionen zu verwalten, klicken Sie auf die Schaltfläche „Minecraft-Ordner öffnen“ und öffnen Sie im sich öffnenden Fenster den Ordner „versions“. Hier sehen Sie die heruntergeladenen Versionen.
-
-**Hinweis:** Das Bearbeiten der Versionsdateien kann die Version beschädigen. Um dies zu beheben, müssen Sie die Version löschen und erneut herunterladen.
-
 ### Shader verwalten
-Um die von BukiLauncher heruntergeladenen Minecraft-Versionen zu verwalten, klicken Sie auf die Schaltfläche „Minecraft-Ordner öffnen“ und öffnen Sie im sich öffnenden Fenster den Ordner „versions“. Hier sehen Sie die installierten Shader-Pakete.
+Um die von BukiLauncher heruntergeladenen Minecraft-Versionen zu verwalten, klicken Sie auf die Schaltfläche "Minecraft-Ordner öffnen" und öffnen Sie im sich öffnenden Fenster den Ordner `shaderpacks`. Hier sehen Sie die installierten Shader-Pakete.
 
-Um ein Shader-Paket zu installieren, kopieren Sie das heruntergeladene Shader-Paket, klicken Sie auf die Schaltfläche „Minecraft-Ordner öffnen“ und öffnen Sie im sich öffnenden Fenster den Ordner „shaderpacks“. Füge das kopierte Shader-Paket ein.
+Um ein Shader-Paket zu installieren, kopieren Sie das heruntergeladene Shader-Paket, klicken Sie auf die Schaltfläche "Minecraft-Ordner öffnen" und öffnen Sie im sich öffnenden Fenster den Ordner `shaderpacks`. Füge das kopierte Shader-Paket ein.
 
-***
 
 Bei Problemen mit BukiLauncher kannst du ein GitHub-Issue erstellen.
