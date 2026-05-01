@@ -1,0 +1,50 @@
+{
+    "türkçe": [
+        "Snapshot'ları göster",
+        "Oyun başlatıldığında pencereyi gizle",
+        "Araç ipuçlarını göster",
+        "Java: seçildi",
+        "Java: seçilmedi",
+        "Dil",
+        "Dünya klasörünü aç",
+        "Kaynak paketi klasörünü aç",
+        "Gölgelendirici klasörünü aç",
+        "Mod klasörünü aç"
+    ],
+    "english": [
+        "Show snapshots",
+        "Hide window when game launches",
+        "Show tooltips",
+        "Java: selected",
+        "Java: not selected",
+        "Language",
+        "Open world folder",
+        "Open resource pack folder",
+        "Open shader folder",
+        "Open mod folder"
+    ],
+    "deutsch": [
+        "Snapshots anzeigen",
+        "Fenster beim Spielstart verbergen",
+        "Tooltipps anzeigen",
+        "Java: ausgewählt",
+        "Java: nicht ausgewählt",
+        "Sprache",
+        "Ordner der offenen Welt",
+        "Ordner des Ressourcenpakets öffnen",
+        "Shader-Ordner öffnen",
+        "Mod-Ordner öffnen"
+    ],
+    "русский": [
+        "Показать снимки",
+        "Спрятать окно при запуске игры",
+        "Показывать подсказки",
+        "Java: выбрано",
+        "Java: не выбрано",
+        "Язык",
+        "Открыть папку с миром",
+        "Открыть папку с ресурс-паком",
+        "Открыть папку с шейдерами",
+        "Открыть папку с модами"
+    ]
+}

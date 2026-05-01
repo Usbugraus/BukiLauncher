@@ -1,7 +1,7 @@
 import traceback, datetime
 from tkinter import messagebox
 
-def error_handler(exc_type, exc_value, exc_traceback, language="türkçe"):
+def error_handler(exc_type, exc_value, exc_traceback, language="english"):
 
     tb_text = ''.join(traceback.format_exception(exc_type, exc_value, exc_traceback))
 

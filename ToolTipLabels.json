@@ -1,0 +1,34 @@
+{
+    "türkçe": [
+        "Başlat",
+        "Minecraft klasörünü aç",
+        "Ayarlar",
+        "Hakkında",
+        "Fabric indiriliyor...",
+        "Minecraft indiriliyor..."
+    ],
+    "english": [
+        "Launch",
+        "Open Minecraft folder",
+        "Settings",
+        "About",
+        "Downloading Fabric...",
+        "Downloading Minecraft..."
+    ],
+    "deutsch": [
+        "Start",
+        "Minecraft-Ordner öffnen",
+        "Einstellungen",
+        "Über",
+        "Fabric wird heruntergeladen...",
+        "Minecraft wird heruntergeladen..."
+    ],
+    "русский": [
+        "Запустить",
+        "Открыть папку Minecraft",
+        "Настройки",
+        "О программе",
+        "Загрузка Fabric...",
+        "Загрузка Minecraft..."
+    ]
+}

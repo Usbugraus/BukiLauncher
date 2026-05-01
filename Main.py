@@ -5,8 +5,10 @@ import minecraft_launcher_lib
 import subprocess, threading, json, os, sys
 import ctypes
 import socket
+import winshell, tempfile
 from ToolTip import ToolTip
 from ErrorHandler import error_handler
+from win32com.client import Dispatch
 
 myappid = 'mycompany.myproduct.subproduct.version'
 ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
@@ -25,9 +27,10 @@ mc_dir = minecraft_launcher_lib.utils.get_minecraft_directory()
 process = None
 data_directory = os.path.join(os.path.dirname(__file__), "Data")
 tooltip_labels = {}
-settings_labels = {}
+menu_labels = {}
 labels = {}
 dialogs = {}
+tabs = {}
 default_configuration = {
     "username": "Player",
     "version": "26.1.2",
@@ -35,14 +38,20 @@ default_configuration = {
     "fabric": None,
     "snapshots": False,
     "hide_when_start": True,
-    "language": "english"
+    "language": "english",
+    "show_tooltip": True
 }
+
+if hasattr(sys, "_MEIPASS"):
+    icon_path = os.path.join(sys._MEIPASS, "Icon.ico")
+else:
+    icon_path = os.path.join(os.path.dirname(__file__), "Icon.ico")
 
 with open(os.path.join(data_directory, "ToolTipLabels.json"), "r", encoding="utf-8") as f:
     tooltip_dict = json.load(f)
     
-with open(os.path.join(data_directory, "SettingsMenuLabels.json"), "r", encoding="utf-8") as f:
-    settings_dict = json.load(f)
+with open(os.path.join(data_directory, "MenuLabels.json"), "r", encoding="utf-8") as f:
+    menu_dict = json.load(f)
     
 with open(os.path.join(data_directory, "Labels.json"), "r", encoding="utf-8") as f:
     label_dict = json.load(f)
@@ -123,19 +132,25 @@ def is_vanilla_installed(mc_version: str) -> bool:
         for v in installed
     )
     
-def open_dir():
+def open_dir(dir=""):
     global mc_dir
     if not os.path.exists(mc_dir):
         os.makedirs(mc_dir, exist_ok=True)
-    
-    games_dir = mc_dir
-    
-    if sys.platform == "win32":
-        os.startfile(games_dir)
-    elif sys.platform == "darwin":
-        os.system(f'open "{games_dir}"')
+
+    if not dir.strip():
+        if sys.platform == "win32":
+            os.startfile(mc_dir)
+        elif sys.platform == "darwin":
+            os.system(f'open "{mc_dir}"')
+        else:
+            os.system(f'xdg-open "{mc_dir}"')
     else:
-        os.system(f'xdg-open "{games_dir}"')
+        if sys.platform == "win32":
+            os.startfile(os.path.join(mc_dir, dir))
+        elif sys.platform == "darwin":
+            os.system(f'open "{os.path.join(mc_dir, dir)}"')
+        else:
+            os.system(f'xdg-open "{os.path.join(mc_dir, dir)}"')
         
 def select_java():
     global dialogs
@@ -145,15 +160,13 @@ def select_java():
     if path:
         global java_path
         java_path = path
-        java_button.config(style="MarkedToolbarButton.TButton" if java_path else "DangerToolbarButton.TButton")
         update_settings()
-        save_settings()
 
 def launch():
     threading.Thread(target=launch_game, daemon=True).start()
 
 def launch_game():
-    global process, mc_dir, dialogs
+    global process, mc_dir, dialogs, shortcut_command
     try:
         win.after(0, lambda: progress_label.pack(padx=20, pady=(0, 20), fill="x"))
 
@@ -188,7 +201,7 @@ def launch_game():
 
             if version_id not in installed:
                 win.after(0, lambda: start_button.config(state="disabled"))
-                win.after(0, lambda: progress_label.config(text=tooltip_labels[7]))
+                win.after(0, lambda: progress_label.config(text=tooltip_labels[4]))
 
                 ok = install_fabric(mc_version, loader)
                 if not ok:
@@ -221,7 +234,7 @@ def launch_game():
 
         if version not in installed_versions:
             win.after(0, lambda: start_button.config(state="disabled"))
-            win.after(0, lambda: progress_label.config(text=tooltip_labels[7]))
+            win.after(0, lambda: progress_label.config(text=tooltip_labels[5]))
 
             callback = {"setStatus": set_status}
 
@@ -262,7 +275,7 @@ def launch_game():
                     return
                 process.wait()
             except Exception:
-                error_handler(*sys.exc_info(), parent=win)
+                error_handler(*sys.exc_info(), language=language.get())
             finally:
                 win.after(0, lambda: (
                     win.deiconify(),
@@ -273,7 +286,7 @@ def launch_game():
             threading.Thread(target=wait_game, daemon=True).start()
 
     except Exception:
-        error_handler(*sys.exc_info())
+        error_handler(*sys.exc_info(), language=language.get())
         win.after(0, progress_label.pack_forget)
 
 def install_fabric(mc_version, loader):
@@ -290,7 +303,7 @@ def install_fabric(mc_version, loader):
         return False
 
     return True
-    
+
 def set_status(text):
     if len(text) < 30:
         progress_label.config(text=text)
@@ -306,6 +319,7 @@ def save_settings():
     snapshots = show_snapshots.get()
     hide = hide_when_start.get()
     lang = language.get()
+    tlp = tooltips.get()
     
     if fabric == "None":
         fabric = None
@@ -317,7 +331,8 @@ def save_settings():
         "fabric": fabric,
         "snapshots": snapshots,
         "hide_when_start": hide,
-        "language": lang
+        "language": lang,
+        "show_tooltip": tlp
     }
     
     with open(configuration_file, "w", encoding="utf-8") as f:
@@ -331,7 +346,18 @@ def show_about():
     messagebox.showinfo(dialogs["about"][0], dialogs["about"][1])
     
 def update_settings(*args):
-    global mc_versions, tooltip_labels, tooltip_dict, settings_dict, settings_labels, labels, label_dict, dialogs, dialog_dict
+    global mc_versions, tooltip_labels, tooltip_dict, menu_dict, menu_labels, labels, label_dict, dialogs, dialog_dict, shortcut_command, java_path, mc_dir
+
+    try:
+        tooltip_labels = tooltip_dict[language.get()]
+        menu_labels = menu_dict[language.get()]
+        labels = label_dict[language.get()]
+        dialogs = dialog_dict[language.get()]
+    except:
+        tooltip_labels = tooltip_dict["english"]
+        menu_labels = menu_dict["english"]
+        labels = label_dict["english"]
+        dialogs = dialog_dict["english"]
     
     if is_connected():
         if show_snapshots.get():
@@ -350,31 +376,26 @@ def update_settings(*args):
         mc_versions = []
         
     version_combobox.config(values=mc_versions)
-    
-    try:
-        tooltip_labels = tooltip_dict[language.get()]
-        settings_labels = settings_dict[language.get()]
-        labels = label_dict[language.get()]
-        dialogs = dialog_dict[language.get()]
-    except:
-        tooltip_labels = tooltip_dict["english"]
-        settings_labels = settings_dict["english"]
-        labels = label_dict["english"]
-        dialogs = dialog_dict["english"]
         
     username_label.config(text=labels[0])
     version_label.config(text=labels[1])
     fabric_label.config(text=labels[2])
         
-    settings_menu.entryconfig(0, label=settings_labels[0])
-    settings_menu.entryconfig(1, label=settings_labels[1])
-    settings_menu.entryconfig(2, label=settings_labels[2])
+    settings_menu.entryconfig(0, label=menu_labels[0])
+    settings_menu.entryconfig(1, label=menu_labels[1])
+    settings_menu.entryconfig(2, label=menu_labels[2])
+    settings_menu.entryconfig(3, label=menu_labels[3] if java_path else menu_labels[4])
+    settings_menu.entryconfig(4, label=menu_labels[5])
+
+    open_menu.entryconfig(0, label=menu_labels[6])
+    open_menu.entryconfig(1, label=menu_labels[7])
+    open_menu.entryconfig(2, label=menu_labels[8])
+    open_menu.entryconfig(3, label=menu_labels[9])
     
-    ToolTip(start_button, tooltip_labels[0])
-    ToolTip(dir_button, tooltip_labels[1])
-    ToolTip(java_button, tooltip_labels[2] if java_path else tooltip_labels[3])
-    ToolTip(settings_button, tooltip_labels[4])
-    ToolTip(about_button, tooltip_labels[5])
+    ToolTip(start_button, tooltip_labels[0], shown=tooltips.get())
+    ToolTip(dir_button, tooltip_labels[1], shown=tooltips.get())
+    ToolTip(settings_button, tooltip_labels[2], shown=tooltips.get())
+    ToolTip(about_button, tooltip_labels[3], shown=tooltips.get())
     
     save_settings()
 
@@ -382,17 +403,13 @@ win = tk.Tk()
 win.title("BukiLauncher")
 win.resizable(False, False)
 
-sys.excepthook = lambda t, v, tb: error_handler(t, v, tb)
-win.report_callback_exception = lambda t, v, tb: error_handler(t, v, tb)
+sys.excepthook = lambda t, v, tb: error_handler(t, v, tb, language=language.get())
+win.report_callback_exception = lambda t, v, tb: error_handler(t, v, tb, language=language.get())
 
 show_snapshots = tk.BooleanVar(value=configuration["snapshots"])
 language = tk.StringVar(value=configuration["language"])
-
+tooltips = tk.BooleanVar(value=configuration["show_tooltip"])
 hide_when_start = tk.BooleanVar(value=configuration["hide_when_start"])
-if hasattr(sys, "_MEIPASS"):
-    icon_path = os.path.join(sys._MEIPASS, "Icon.ico")
-else:
-    icon_path = os.path.join(os.path.dirname(__file__), "Icon.ico")
 
 if os.path.exists(icon_path):
     win.iconbitmap(icon_path)
@@ -418,34 +435,30 @@ style.configure("In.TFrame", background="SystemButtonFace", borderwidth=1, relie
 
 style.configure("ToolbarButton.TButton", background="SystemButtonFace", relief=tk.FLAT, width=5, padding=(0, 5), font=("Segoe Fluent Icons", 10))
 style.map("ToolbarButton.TButton", background=[("pressed", "#ffff00"), ("active", "SystemButtonFace")])
-style.layout("TButton", [('Button.border', {'children': [('Button.padding', {'children': [('Button.label', {'sticky': 'nswe'})]})]})])
 
 style.configure("MarkedToolbarButton.TButton", background="SystemButtonFace", foreground="#0040bf", relief=tk.FLAT, width=5, padding=(0, 5), font=("Segoe Fluent Icons", 10))
 style.map("MarkedToolbarButton.TButton", background=[("pressed", "#0040bf"), ("active", "SystemButtonFace")], foreground=[("pressed", "#ffffff"), ("active", "#0040bf")])
 
-style.configure("DangerToolbarButton.TButton", background="SystemButtonFace", foreground="#bf0000", relief=tk.FLAT, width=5, padding=(0, 5), font=("Segoe Fluent Icons", 10))
-style.map("DangerToolbarButton.TButton", background=[("pressed", "#bf0000"), ("active", "SystemButtonFace")], foreground=[("pressed", "#ffffff"), ("active", "#bf0000")])
-
 ttk.Label(win, text="BukiLauncher", font=("Segoe UI", 12, "bold")).pack(padx=20, pady=(20, 0))
 
-input_frame = ttk.Frame(win, padding=10, style="Out.TFrame")
-input_frame.pack(padx=20, pady=20, fill="x")
+game_frame = ttk.Frame(win, padding=10, style="Out.TFrame")
+game_frame.pack(padx=20, pady=20, fill="x")
 
-username_label = ttk.Label(input_frame, text="")
+username_label = ttk.Label(game_frame, text="")
 username_label.grid(row=0, column=0, padx=(0, 5), pady=(0, 5))
 
-username_entry = ttk.Entry(input_frame, width=25)
+username_entry = ttk.Entry(game_frame, width=25)
 username_entry.grid(row=0, column=1, pady=(0, 5))
 username_entry.bind("<KeyRelease>", lambda e: save_settings())
 
-version_label = ttk.Label(input_frame, text="")
+version_label = ttk.Label(game_frame, text="")
 version_label.grid(row=1, column=0, padx=(0, 5))
  
-version_combobox = ttk.Combobox(input_frame, values=versions, state="readonly", width=20, takefocus=0)
+version_combobox = ttk.Combobox(game_frame, values=versions, state="readonly", width=20, takefocus=0)
 version_combobox.grid(row=1, column=1, sticky="ew")
 version_combobox.bind("<<ComboboxSelected>>", lambda e: save_settings())
 
-fabric_label = ttk.Label(input_frame, text="")
+fabric_label = ttk.Label(game_frame, text="")
 fabric_label.grid(row=2, column=0, padx=(0, 5), pady=(5, 0))
 
 fabric_loaders = ["None"]
@@ -464,7 +477,7 @@ if is_connected():
 else:
     fabric_loaders = ["None"]
 
-fabric_combobox = ttk.Combobox(input_frame, values=fabric_loaders, state="readonly", width=20, takefocus=0)
+fabric_combobox = ttk.Combobox(game_frame, values=fabric_loaders, state="readonly", width=20, takefocus=0)
 fabric_combobox.grid(row=2, column=1, sticky="ew", pady=(5, 0))
     
 fabric_combobox.bind("<<ComboboxSelected>>", lambda e: save_settings())
@@ -483,12 +496,10 @@ start_button.grid(row=0, column=0)
 
 dir_button = ttk.Button(opt_toolbar, text="\uE19C", command=open_dir, style="ToolbarButton.TButton")
 dir_button.grid(row=0, column=1)
-
-java_button = ttk.Button(opt_toolbar, text="\uEC32", command=select_java, style="MarkedToolbarButton.TButton" if java_path else "DangerToolbarButton.TButton")
-java_button.grid(row=0, column=2)
+dir_button.bind('<ButtonRelease-3>', lambda event: open_menu.tk_popup(event.x_root, event.y_root))
 
 settings_button = ttk.Button(opt_toolbar, text="\uE115", style="ToolbarButton.TButton")
-settings_button.grid(row=0, column=3)
+settings_button.grid(row=0, column=2)
 settings_button.bind('<ButtonRelease-1>', lambda event: settings_menu.tk_popup(event.x_root, event.y_root))
 
 about_button = ttk.Button(about_toolbar, text="\uE946", command=show_about, style="ToolbarButton.TButton")
@@ -527,6 +538,8 @@ else:
 settings_menu = tk.Menu(win, tearoff=0, activebackground="#0040bf", activeforeground="#ffffff")
 settings_menu.add_checkbutton(label="", onvalue=True, offvalue=False, variable=show_snapshots, command=update_settings)
 settings_menu.add_checkbutton(label="", onvalue=True, offvalue=False, variable=hide_when_start, command=update_settings)
+settings_menu.add_checkbutton(label="", onvalue=True, offvalue=False, variable=tooltips, command=update_settings)
+settings_menu.add_command(label="", command=select_java)
 
 lang_menu = tk.Menu(settings_menu, tearoff=0, activebackground="#0040bf", activeforeground="#ffffff")
 lang_menu.add_radiobutton(label='Türkçe', variable=language, value="türkçe", command=update_settings)
@@ -536,7 +549,16 @@ lang_menu.add_radiobutton(label='Pусский', variable=language, value="ру�
 
 settings_menu.add_cascade(menu=lang_menu, label="")
 
+open_menu = tk.Menu(win, tearoff=0, activebackground="#0040bf", activeforeground="#ffffff")
+open_menu.add_command(label="", command=lambda: open_dir("saves"))
+open_menu.add_command(label="", command=lambda: open_dir("resourcepacks"))
+open_menu.add_command(label="", command=lambda: open_dir("shaderpacks"))
+open_menu.add_command(label="", command=lambda: open_dir("mods"))
+
 update_settings()
+
+if not is_connected():
+    messagebox.showwarning(dialogs["intr"][0], dialogs["intr"][1])
 
 win.protocol("WM_DELETE_WINDOW", save_on_exit)
 win.mainloop()

@@ -1,4 +1,3 @@
-import tkinter as tk
 from tkinter import messagebox
 import traceback, datetime, ctypes, sys
 
@@ -14,9 +13,6 @@ try:
     import Main
 
 except Exception as e:
-    win = tk.Tk()
-    win.withdraw()
-
     error = traceback.format_exc()
 
     messagebox.showerror(

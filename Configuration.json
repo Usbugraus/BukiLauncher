@@ -5,5 +5,6 @@
     "fabric": null,
     "snapshots": false,
     "hide_when_start": true,
-    "language": "english"
+    "language": "english",
+    "show_tooltip": true
 }
