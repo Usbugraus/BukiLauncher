@@ -5,12 +5,12 @@ import minecraft_launcher_lib
 import subprocess, threading, json, os, sys
 import ctypes
 import socket
-import winshell, tempfile
 from ToolTip import ToolTip
 from ErrorHandler import error_handler
-from win32com.client import Dispatch
+from JVMArgumentsEditor import edit_jvm_arguments
+from ModManagement import *
 
-myappid = 'mycompany.myproduct.subproduct.version'
+myappid = 'com.usbugraus.bukilauncher'
 ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
 
 try:
@@ -24,6 +24,7 @@ except Exception:
 configuration_file = "Configuration.json"
 threshold_version = "1.16.5"
 mc_dir = minecraft_launcher_lib.utils.get_minecraft_directory()
+mod_dir = os.path.join(mc_dir, "mods")
 process = None
 data_directory = os.path.join(os.path.dirname(__file__), "Data")
 tooltip_labels = {}
@@ -39,7 +40,8 @@ default_configuration = {
     "snapshots": False,
     "hide_when_start": True,
     "language": "english",
-    "show_tooltip": True
+    "show_tooltip": True,
+    "jvm_arguments": []
 }
 
 if hasattr(sys, "_MEIPASS"):
@@ -93,7 +95,7 @@ if is_connected():
         mc_versions = [
             v["id"]
             for v in minecraft_launcher_lib.utils.get_version_list()
-            if v["type"] in ["release", "snapshot"]
+            if v["type"] in ["release", "snapshot", "old_beta", "old_alpha"]
         ]
     else:
         mc_versions = [
@@ -166,7 +168,7 @@ def launch():
     threading.Thread(target=launch_game, daemon=True).start()
 
 def launch_game():
-    global process, mc_dir, dialogs, shortcut_command
+    global process, mc_dir, dialogs
     try:
         win.after(0, lambda: progress_label.pack(padx=20, pady=(0, 20), fill="x"))
 
@@ -186,6 +188,13 @@ def launch_game():
             win.after(0, progress_label.pack_forget)
             return
 
+        if java_path == "rick":
+            import webbrowser
+            webbrowser.open("https://www.youtube.com/watch?v=dQw4w9WgXcQ")
+            win.after(0, progress_label.pack_forget)
+            win.after(0, lambda: start_button.config(state="normal"))
+            return
+
         username = username_entry.get()
         version = version_combobox.get()
         loader = fabric_combobox.get()
@@ -201,7 +210,7 @@ def launch_game():
 
             if version_id not in installed:
                 win.after(0, lambda: start_button.config(state="disabled"))
-                win.after(0, lambda: progress_label.config(text=tooltip_labels[4]))
+                win.after(0, lambda: progress_label.config(text=tooltip_labels[8]))
 
                 ok = install_fabric(mc_version, loader)
                 if not ok:
@@ -234,7 +243,7 @@ def launch_game():
 
         if version not in installed_versions:
             win.after(0, lambda: start_button.config(state="disabled"))
-            win.after(0, lambda: progress_label.config(text=tooltip_labels[5]))
+            win.after(0, lambda: progress_label.config(text=tooltip_labels[9]))
 
             callback = {"setStatus": set_status}
 
@@ -246,7 +255,8 @@ def launch_game():
             "username": username,
             "uuid": "00000000000000000000000000000000",
             "token": "",
-            "executablePath": java_path
+            "executablePath": java_path,
+            "jvmArguments": jvm_arguments
         }
 
         command = minecraft_launcher_lib.command.get_minecraft_command(
@@ -276,10 +286,12 @@ def launch_game():
                 process.wait()
             except Exception:
                 error_handler(*sys.exc_info(), language=language.get())
+                win.after(0, lambda: start_button.config(state="normal"))
             finally:
                 win.after(0, lambda: (
                     win.deiconify(),
-                    progress_label.pack_forget()
+                    progress_label.pack_forget(),
+                    start_button.config(state="normal")
                 ))
 
         if process is not None:
@@ -288,6 +300,7 @@ def launch_game():
     except Exception:
         error_handler(*sys.exc_info(), language=language.get())
         win.after(0, progress_label.pack_forget)
+        win.after(0, lambda: start_button.config(state="normal"))
 
 def install_fabric(mc_version, loader):
     mc_dir = minecraft_launcher_lib.utils.get_minecraft_directory()
@@ -299,7 +312,8 @@ def install_fabric(mc_version, loader):
             minecraft_directory=mc_dir
         )
     except Exception:
-        error_handler(*sys.exc_info())
+        error_handler(*sys.exc_info(), language=language.get())
+        win.after(0, lambda: start_button.config(state="normal"))
         return False
 
     return True
@@ -320,11 +334,12 @@ def save_settings():
     hide = hide_when_start.get()
     lang = language.get()
     tlp = tooltips.get()
+    jvmargs = jvm_arguments
     
     if fabric == "None":
         fabric = None
     
-    configuration = {
+    config = {
         "username": username,
         "version": version,
         "java_path": java_path,
@@ -332,11 +347,12 @@ def save_settings():
         "snapshots": snapshots,
         "hide_when_start": hide,
         "language": lang,
-        "show_tooltip": tlp
+        "show_tooltip": tlp,
+        "jvm_arguments": jvmargs,
     }
     
     with open(configuration_file, "w", encoding="utf-8") as f:
-        json.dump(configuration, f, ensure_ascii=False, indent=4)
+        json.dump(config, f, ensure_ascii=False, indent=4)
         
 def save_on_exit():
     save_settings()
@@ -344,6 +360,16 @@ def save_on_exit():
     
 def show_about():
     messagebox.showinfo(dialogs["about"][0], dialogs["about"][1])
+
+def load_mods(event=None):
+    mod_list.delete(0, tk.END)
+
+    if not os.path.exists(mod_dir):
+        os.makedirs(mod_dir, exist_ok=True)
+
+    for f in os.listdir(mod_dir):
+        if f.endswith(".jar"):
+            mod_list.insert(tk.END, f)
     
 def update_settings(*args):
     global mc_versions, tooltip_labels, tooltip_dict, menu_dict, menu_labels, labels, label_dict, dialogs, dialog_dict, shortcut_command, java_path, mc_dir
@@ -364,7 +390,7 @@ def update_settings(*args):
             mc_versions = [
                 v["id"]
                 for v in minecraft_launcher_lib.utils.get_version_list()
-                if v["type"] in ["release", "snapshot"]
+                if v["type"] in ["release", "snapshot", "old_beta", "old_alpha"]
             ]
         else:
             mc_versions = [
@@ -386,18 +412,54 @@ def update_settings(*args):
     settings_menu.entryconfig(2, label=menu_labels[2])
     settings_menu.entryconfig(3, label=menu_labels[3] if java_path else menu_labels[4])
     settings_menu.entryconfig(4, label=menu_labels[5])
+    settings_menu.entryconfig(5, label=menu_labels[6])
 
-    open_menu.entryconfig(0, label=menu_labels[6])
-    open_menu.entryconfig(1, label=menu_labels[7])
-    open_menu.entryconfig(2, label=menu_labels[8])
-    open_menu.entryconfig(3, label=menu_labels[9])
+    open_menu.entryconfig(0, label=menu_labels[7])
+    open_menu.entryconfig(1, label=menu_labels[8])
+    open_menu.entryconfig(2, label=menu_labels[9])
     
     ToolTip(start_button, tooltip_labels[0], shown=tooltips.get())
     ToolTip(dir_button, tooltip_labels[1], shown=tooltips.get())
     ToolTip(settings_button, tooltip_labels[2], shown=tooltips.get())
     ToolTip(about_button, tooltip_labels[3], shown=tooltips.get())
+    ToolTip(add_button, tooltip_labels[4], shown=tooltips.get())
+    ToolTip(delete_button, tooltip_labels[5], shown=tooltips.get())
+    ToolTip(mod_dir_button, tooltip_labels[6], shown=tooltips.get())
+    ToolTip(modrinth_button, tooltip_labels[7], shown=tooltips.get())
+
+    tab.tab(game_frame, text=labels[3])
+    tab.tab(mod_frame, text=labels[4])
+
+    load_mods()
     
     save_settings()
+
+def set_jvmargs():
+    global jvm_arguments
+    jvmargs = edit_jvm_arguments(win, language=language.get(), args=jvm_arguments)
+    jvm_arguments = jvmargs
+    update_settings()
+
+def del_mod():
+    if mod_list.curselection():
+        selected_mod = mod_list.get(mod_list.curselection()[0])
+        deleted = delete_mod(os.path.join(mod_dir, selected_mod), language=language.get())
+        for i in range(mod_list.size()):
+            if mod_list.get(i) == deleted:
+                mod_list.delete(i)
+                break
+    else:
+        delete_button.config(state="disabled")
+
+def add_md():
+    added = add_mod(language=language.get())
+    mod_list.insert(tk.END, added)
+
+def check_selected(event=None):
+    if mod_list.curselection():
+        delete_button.config(state="normal")
+    else:
+        delete_button.config(state="disabled")
 
 win = tk.Tk()
 win.title("BukiLauncher")
@@ -410,6 +472,7 @@ show_snapshots = tk.BooleanVar(value=configuration["snapshots"])
 language = tk.StringVar(value=configuration["language"])
 tooltips = tk.BooleanVar(value=configuration["show_tooltip"])
 hide_when_start = tk.BooleanVar(value=configuration["hide_when_start"])
+jvm_arguments = configuration["jvm_arguments"]
 
 if os.path.exists(icon_path):
     win.iconbitmap(icon_path)
@@ -418,6 +481,8 @@ style = ttk.Style()
 style.theme_use("default")
 
 style.configure("TFrame", background="SystemButtonFace")
+style.configure("Out.TFrame", background="SystemButtonFace", borderwidth=1, relief=tk.RAISED)
+style.configure("In.TFrame", background="SystemButtonFace", borderwidth=1, relief=tk.SUNKEN)
 
 style.configure("TEntry", focuswidth=2, focuscolor="#0040bf", selectbackground="#0040bf")
 
@@ -426,23 +491,29 @@ style.map("TCombobox", fieldbackground=[("readonly", "#ffffff"), ("disabled", "S
 
 style.map("TButton", background="SystemButtonFace")
 style.map("TButton", background=[("pressed", "#ffff00"), ("active", "SystemButtonFace")])
-
-
-style.configure("Out.TFrame", background="SystemButtonFace", borderwidth=1, relief=tk.RAISED)
-
-style.configure("In.TFrame", background="SystemButtonFace", borderwidth=1, relief=tk.SUNKEN)
-
-
 style.configure("ToolbarButton.TButton", background="SystemButtonFace", relief=tk.FLAT, width=5, padding=(0, 5), font=("Segoe Fluent Icons", 10))
-style.map("ToolbarButton.TButton", background=[("pressed", "#ffff00"), ("active", "SystemButtonFace")])
-
+style.map("ToolbarButton.TButton", background=[("pressed", "#ffff00"), ("active", "SystemButtonFace")], foreground=[("disabled", "#404040")])
 style.configure("MarkedToolbarButton.TButton", background="SystemButtonFace", foreground="#0040bf", relief=tk.FLAT, width=5, padding=(0, 5), font=("Segoe Fluent Icons", 10))
-style.map("MarkedToolbarButton.TButton", background=[("pressed", "#0040bf"), ("active", "SystemButtonFace")], foreground=[("pressed", "#ffffff"), ("active", "#0040bf")])
+style.map("MarkedToolbarButton.TButton", background=[("pressed", "#0040bf"), ("active", "SystemButtonFace")], foreground=[("pressed", "#ffffff"), ("active", "#0040bf"), ("disabled", "#bfbf00")])
+style.configure("DangerToolbarButton.TButton", background="SystemButtonFace", foreground="#bf0000", relief=tk.FLAT, width=5, padding=(0, 5), font=("Segoe Fluent Icons", 10))
+style.map("DangerToolbarButton.TButton", background=[("pressed", "#bf0000"), ("active", "SystemButtonFace")], foreground=[("pressed", "#ffffff"), ("active", "#bf0000"), ("disabled", ("#804040"))])
+
+style.configure("TNotebook", background="SystemButtonFace")
+style.configure("TNotebook.Tab", background="SystemButtonFace")
+style.map("TNotebook.Tab", highlightcolor=[("selected", "#0040bf")], padding=[("selected", (8, 5))])
+
+style.configure("Treeview", focuscolor="#0040bf", focuswidth=2)
+style.map("Treeview", fieldbackground=[("active", "SystemButtonFace"), ("!active", "SystemButtonFace")], background=[("selected", "#0040bf")])
+style.configure("Treeview.Heading", background="SystemButtonFace")
+style.map("Treeview.Heading", background=[("active", "SystemButtonFace")])
 
 ttk.Label(win, text="BukiLauncher", font=("Segoe UI", 12, "bold")).pack(padx=20, pady=(20, 0))
 
-game_frame = ttk.Frame(win, padding=10, style="Out.TFrame")
-game_frame.pack(padx=20, pady=20, fill="x")
+tab = ttk.Notebook(win)
+tab.pack(padx=20, pady=20, fill="x")
+
+game_frame = ttk.Frame(tab, padding=10)
+tab.add(game_frame, text="")
 
 username_label = ttk.Label(game_frame, text="")
 username_label.grid(row=0, column=0, padx=(0, 5), pady=(0, 5))
@@ -481,6 +552,36 @@ fabric_combobox = ttk.Combobox(game_frame, values=fabric_loaders, state="readonl
 fabric_combobox.grid(row=2, column=1, sticky="ew", pady=(5, 0))
     
 fabric_combobox.bind("<<ComboboxSelected>>", lambda e: save_settings())
+
+mod_frame = ttk.Frame(tab, padding=10)
+tab.add(mod_frame, text="")
+
+mod_list = tk.Listbox(
+    mod_frame,
+    height=3,
+    width=25,
+    bd=1,
+    highlightthickness=0,
+    selectbackground="#0040bf",
+    selectborderwidth=1,
+    selectforeground="#ffffff",
+)
+mod_list.pack(side="right", fill="both")
+
+mod_toolbar = ttk.Frame(mod_frame, style="Out.TFrame", padding=5)
+mod_toolbar.pack(side="left")
+
+add_button = ttk.Button(mod_toolbar, text="\uE109", style="MarkedToolbarButton.TButton", command=add_md)
+add_button.grid(row=0, column=0)
+
+delete_button = ttk.Button(mod_toolbar, text="\uE107", style="DangerToolbarButton.TButton", command=del_mod)
+delete_button.grid(row=0, column=1)
+
+mod_dir_button = ttk.Button(mod_toolbar, text="\uE19C", style="ToolbarButton.TButton", command=open_mod_dir)
+mod_dir_button.grid(row=1, column=0)
+
+modrinth_button = ttk.Button(mod_toolbar, text="\uE12B", style="ToolbarButton.TButton", command=open_modrinth)
+modrinth_button.grid(row=1, column=1)
 
 toolbar_frame = ttk.Frame(win)
 toolbar_frame.pack(fill="x")
@@ -540,12 +641,15 @@ settings_menu.add_checkbutton(label="", onvalue=True, offvalue=False, variable=s
 settings_menu.add_checkbutton(label="", onvalue=True, offvalue=False, variable=hide_when_start, command=update_settings)
 settings_menu.add_checkbutton(label="", onvalue=True, offvalue=False, variable=tooltips, command=update_settings)
 settings_menu.add_command(label="", command=select_java)
+settings_menu.add_command(label="", command=set_jvmargs)
 
 lang_menu = tk.Menu(settings_menu, tearoff=0, activebackground="#0040bf", activeforeground="#ffffff")
-lang_menu.add_radiobutton(label='Türkçe', variable=language, value="türkçe", command=update_settings)
+lang_menu.add_radiobutton(label='Türkçe', variable=language, value="turkish", command=update_settings)
 lang_menu.add_radiobutton(label='English', variable=language, value="english", command=update_settings)
-lang_menu.add_radiobutton(label='Deutsch', variable=language, value="deutsch", command=update_settings)
-lang_menu.add_radiobutton(label='Pусский', variable=language, value="русский", command=update_settings)
+lang_menu.add_radiobutton(label='Deutsch', variable=language, value="german", command=update_settings)
+lang_menu.add_radiobutton(label='Pусский', variable=language, value="russian", command=update_settings)
+lang_menu.add_radiobutton(label='Español', variable=language, value="spanish", command=update_settings)
+lang_menu.add_radiobutton(label='Français', variable=language, value="french", command=update_settings)
 
 settings_menu.add_cascade(menu=lang_menu, label="")
 
@@ -553,7 +657,6 @@ open_menu = tk.Menu(win, tearoff=0, activebackground="#0040bf", activeforeground
 open_menu.add_command(label="", command=lambda: open_dir("saves"))
 open_menu.add_command(label="", command=lambda: open_dir("resourcepacks"))
 open_menu.add_command(label="", command=lambda: open_dir("shaderpacks"))
-open_menu.add_command(label="", command=lambda: open_dir("mods"))
 
 update_settings()
 
@@ -561,4 +664,5 @@ if not is_connected():
     messagebox.showwarning(dialogs["intr"][0], dialogs["intr"][1])
 
 win.protocol("WM_DELETE_WINDOW", save_on_exit)
+win.bind("<Button-1>", check_selected)
 win.mainloop()

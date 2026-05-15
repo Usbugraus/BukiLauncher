@@ -1,10 +1,11 @@
 {
-    "türkçe": [
+    "turkish": [
         "Snapshot'ları göster",
         "Oyun başlatıldığında pencereyi gizle",
         "Araç ipuçlarını göster",
         "Java: seçildi",
         "Java: seçilmedi",
+        "JVM argümanlarını düzenle",
         "Dil",
         "Dünya klasörünü aç",
         "Kaynak paketi klasörünü aç",
@@ -17,34 +18,63 @@
         "Show tooltips",
         "Java: selected",
         "Java: not selected",
+        "Edit JVM arguments",
         "Language",
         "Open world folder",
         "Open resource pack folder",
         "Open shader folder",
         "Open mod folder"
     ],
-    "deutsch": [
+    "german": [
         "Snapshots anzeigen",
         "Fenster beim Spielstart verbergen",
-        "Tooltipps anzeigen",
+        "Tooltips anzeigen",
         "Java: ausgewählt",
         "Java: nicht ausgewählt",
+        "JVM-Argumente bearbeiten",
         "Sprache",
-        "Ordner der offenen Welt",
-        "Ordner des Ressourcenpakets öffnen",
+        "Weltordner öffnen",
+        "Ressourcenpaket-Ordner öffnen",
         "Shader-Ordner öffnen",
         "Mod-Ordner öffnen"
     ],
-    "русский": [
+    "russian": [
         "Показать снимки",
-        "Спрятать окно при запуске игры",
+        "Скрывать окно при запуске игры",
         "Показывать подсказки",
         "Java: выбрано",
         "Java: не выбрано",
+        "Редактировать аргументы JVM",
         "Язык",
-        "Открыть папку с миром",
-        "Открыть папку с ресурс-паком",
-        "Открыть папку с шейдерами",
-        "Открыть папку с модами"
+        "Открыть папку мира",
+        "Открыть папку ресурспаков",
+        "Открыть папку шейдеров",
+        "Открыть папку модов"
+    ],
+    "spanish": [
+        "Mostrar snapshots",
+        "Ocultar ventana al iniciar el juego",
+        "Mostrar información emergente",
+        "Java: seleccionado",
+        "Java: no seleccionado",
+        "Editar argumentos JVM",
+        "Idioma",
+        "Abrir carpeta del mundo",
+        "Abrir carpeta de paquetes de recursos",
+        "Abrir carpeta de shaders",
+        "Abrir carpeta de mods"
+    ],
+    "french": [
+        "Afficher les snapshots",
+        "Masquer la fenêtre au lancement du jeu",
+        "Afficher les info-bulles",
+        "Java : sélectionné",
+        "Java : non sélectionné",
+        "Modifier les arguments JVM",
+        "Langue",
+        "Ouvrir le dossier des mondes",
+        "Ouvrir le dossier des packs de ressources",
+        "Ouvrir le dossier des shaders",
+        "Ouvrir le dossier des mods"
     ]
 }

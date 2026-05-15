@@ -1,22 +1,44 @@
 {
-    "türkçe": [
+    "turkish": [
         "Kullanıcı adı: ",
         "Sürüm: ",
-        "Fabric loader: "
+        "Fabric yükleyici: ",
+        "Genel",
+        "Modlar"
     ],
     "english": [
         "Username: ",
         "Version: ",
-        "Fabric loader: "
+        "Fabric loader: ",
+        "General",
+        "Mods"
     ],
-    "deutsch": [
+    "german": [
         "Benutzername: ",
         "Version: ",
-        "Fabric-Loader: "
+        "Fabric-Loader: ",
+        "Allgemein",
+        "Mods"
     ],
-    "русский": [
+    "russian": [
         "Имя пользователя: ",
         "Версия: ",
-        "Fabric загрузчик: "
+        "Fabric загрузчик: ",
+        "Общий",
+        "Моды"
+    ],
+    "spanish": [
+        "Nombre de usuario: ",
+        "Versión: ",
+        "Cargador de Fabric: ",
+        "General",
+        "Mods"
+    ],
+    "french": [
+        "Nom d'utilisateur : ",
+        "Version : ",
+        "Chargeur Fabric : ",
+        "Général",
+        "Mods"
     ]
 }

@@ -1,9 +1,13 @@
 {
-    "türkçe": [
+    "turkish": [
         "Başlat",
         "Minecraft klasörünü aç",
         "Ayarlar",
         "Hakkında",
+        "Mod ekle",
+        "Modu sil",
+        "Mod klasörünü aç",
+        "Modrinth'i aç",
         "Fabric indiriliyor...",
         "Minecraft indiriliyor..."
     ],
@@ -12,23 +16,59 @@
         "Open Minecraft folder",
         "Settings",
         "About",
+        "Add mod",
+        "Delete mod",
+        "Open mods folder",
+        "Open Modrinth",
         "Downloading Fabric...",
         "Downloading Minecraft..."
     ],
-    "deutsch": [
+    "german": [
         "Start",
         "Minecraft-Ordner öffnen",
         "Einstellungen",
         "Über",
+        "Mod hinzufügen",
+        "Mod löschen",
+        "Mod-Ordner öffnen",
+        "Modrinth öffnen",
         "Fabric wird heruntergeladen...",
         "Minecraft wird heruntergeladen..."
     ],
-    "русский": [
+    "russian": [
         "Запустить",
         "Открыть папку Minecraft",
         "Настройки",
         "О программе",
+        "Добавить мод",
+        "Удалить мод",
+        "Открыть папку модов",
+        "Открыть Modrinth",
         "Загрузка Fabric...",
         "Загрузка Minecraft..."
+    ],
+    "spanish": [
+        "Iniciar",
+        "Abrir carpeta de Minecraft",
+        "Configuración",
+        "Acerca de",
+        "Agregar mod",
+        "Eliminar mod",
+        "Abrir carpeta de mods",
+        "Abrir Modrinth",
+        "Descargando Fabric...",
+        "Descargando Minecraft..."
+    ],
+    "french": [
+        "Lancer",
+        "Ouvrir le dossier Minecraft",
+        "Paramètres",
+        "À propos",
+        "Ajouter un mod",
+        "Supprimer le mod",
+        "Ouvrir le dossier des mods",
+        "Ouvrir Modrinth",
+        "Téléchargement de Fabric...",
+        "Téléchargement de Minecraft..."
     ]
 }
