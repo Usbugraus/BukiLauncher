@@ -1,157 +1,261 @@
+# BukiLauncher
+
+* [English](#bukilauncher---en)
+* [Türkçe](#bukilauncher---tr)
+* [Deutsch](#bukilauncher---de)
+* [Русский](#bukilauncher---ru)
+
+
+
 # BukiLauncher - EN
 
-BukiLauncher is a simple and fast Minecraft launcher. With BukiLauncher, you can download and play any Vanilla, Snapshot, or Fabric version you want.
+BukiLauncher is a fast and easy-to-use Minecraft launcher. You can easily download and play Vanilla, Snapshot, and Fabric versions.
 
 ## Features
 
 * User-friendly interface
 * Fabric support
-* Java selection option
-* Support for 4 different languages
+* Java executable selection
+* 6 language options
+* Built-in mod store
+* Portable (no installation required)
 
 ## Installation
 
-You don't need to install BukiLauncher. If you downloaded it as an application, extract the `.zip` file and run the application.
+BukiLauncher does not require installation.
+
+1. Extract the downloaded `.zip` file.
+2. Run `BukiLauncher.exe`.
+
+That's it!
 
 ## Installing and Managing Mods
 
-To install mods in BukiLauncher; click on the "Mods" tab and press the "Add Mod" button. Then select the mod you downloaded. The selected mod will be installed and will appear in the list on the side.
+### Downloading Mods
 
-**Note:** Mods will not work if Fabric is not active.
+1. Open the **Mod Store** page.
+2. Search for the mod you want.
+3. Click the download button.
 
-## Managing Worlds and Shaders
+Use the page buttons at the bottom to navigate between pages.
 
-### Managing Worlds
+### Removing Mods
 
-To manage your worlds in Minecraft; right-click on the "Open Minecraft folder" button and click on the "Open world folder" option from the menu that opens. Here you will see your worlds.
+1. Select the mod you want to remove from the installed mods list.
+2. Click the remove button.
 
-**Note:** Modifying your world files may corrupt your world.
+### Importing Mods
 
-### Managing Shaders
+You can install external mod files using the **Import Mod** feature.
 
-To manage Minecraft versions downloaded from BukiLauncher; right-click the "Open Minecraft folder" button and select "Open Shader folder" from the menu. Here you will see the shader packs you have installed.
+> Note: Fabric must be enabled for mods to work.
 
-To install a shader pack; copy the shader pack you downloaded, right-click the "Open Minecraft folder" button and select "Open Shader folder" from the menu. Paste the shader pack you copied.
+## Managing Worlds
 
+To access your Minecraft worlds:
 
+1. Click **Open Minecraft Folder**.
+2. Open the `saves/` folder.
 
-If you have a problem with BukiLauncher, you can open a GitHub issue.
+> Warning: Modifying world files may corrupt your worlds. Backups are recommended.
 
-***
+## Managing Shader Packs
+
+To manage shader packs:
+
+1. Click **Open Minecraft Folder**.
+2. Open the `shaderpacks/` folder.
+
+### Installing a Shader Pack
+
+1. Copy the downloaded shader pack.
+2. Open the `shaderpacks/` folder.
+3. Paste the shader pack into the folder.
+
+## Support
+
+If you find a bug or have a suggestion, please open an issue on GitHub.
+
+## License
+
+Copyright (C) 2026 Buğra US
+
+This project is licensed under the GNU General Public License v3.0 (GPL-3.0).
+
+See the LICENSE file for details.
+
+\---
 
 # BukiLauncher - TR
 
-BukiLauncher, basit ve hızlı bir Minecraft başlatıcısıdır.
-BukiLauncher ile istediğiniz Vanilla, Snapshot ve Fabric sürümlerini indirip oynayabilirsiniz.
+BukiLauncher, hızlı ve kullanımı kolay bir Minecraft başlatıcısıdır. Vanilla, Snapshot ve Fabric sürümlerini kolayca indirip oynayabilirsiniz.
 
 ## Özellikler
 
 * Kullanıcı dostu arayüz
 * Fabric desteği
-* Java seçme özelliği
-* 4 farklı dil desteği
+* Java yürütülebilir dosyası seçebilme
+* 6 farklı dil desteği
+* Yerleşik mod mağazası
+* Taşınabilir kullanım (kurulum gerektirmez)
 
 ## Kurulum
 
-BukiLauncher'ı kurmanıza gerek yok. Eğer uygulama olarak indirdiyseniz `.zip`dosyasını çıkartın ve uygulamayı çalıştırın.
+BukiLauncher kurulum gerektirmez.
+
+1. İndirdiğiniz `.zip` dosyasını çıkarın.
+2. `BukiLauncher.exe` dosyasını çalıştırın.
+
+Hepsi bu kadar!
 
 ## Mod Kurma ve Yönetme
 
-BukiLauncher'da mod kurmak için; "Modlar" sekmesine tıklayın ve "Mod ekle" düğmesine basın. Ardından indirdiğiniz modu seçin. Seçtiğiniz mod kurulmuş olacaktır ve kurulan modlar yandaki listede gözükecektir.
+### Mod İndirme
 
-**Not:** Fabric aktif değilse modlar çalışmayacaktır.
+1. **Mod Mağazası** sayfasını açın.
+2. İstediğiniz modu arayın.
+3. İndirme düğmesine tıklayın.
 
-## Dünyaları ve Gölgelendiricileri Yönetme
+### Mod Silme
 
-### Dünyaları Yönetme
+1. Silmek istediğiniz modu seçin.
+2. Sil düğmesine tıklayın.
 
-Minecraft'taki dünyalarınızı yönetmek için; "Minecraft klasörünü aç" düğmesine sağ tıklayın ve açılan menüden "Dünya klasörünü aç" seçeneğine tıklayın. Burada dünyalarınız göreceksiniz.
+### Mod İçe Aktarma
 
-**Not:** Dünyanızın dosyalarını değiştirirseniz dünyanız bozulabilir.
+Harici mod dosyalarını **Mod İçe Aktar** özelliği ile yükleyebilirsiniz.
 
-### Gölgelendiricileri Yönetme
+> Not: Modların çalışabilmesi için Fabric etkin olmalıdır.
 
-BukiLauncher'dan indirdiğiniz Minecraft sürümlerini yönetmek için; "Minecraft klasörünü aç" düğmesine sağ tıklayın ve açılan menüden "Gölgelendirici klasörünü aç" seçeneğine tıklayın. Burada kurduğunuz gögelendirici paketlerini göreceksiniz.
+## Dünyaları Yönetme
 
-Gölgelendirici paketi kurmak için; indirdiğiniz gölgelendirici paketini kopyalayın, "Minecraft klasörünü aç" düğmesine sağ tıklayın ve açılan menüden "Gölgelendirici klasörünü aç" seçeneğine tıklayın. Kopyaladığınız gölgelendirici paketini yapıştırın.
+1. **Minecraft klasörünü aç** düğmesine tıklayın.
+2. `saves/` klasörüne girin.
 
+> Uyarı: Dünya dosyalarını değiştirmeniz durumunda dünyanız bozulabilir. Yedek almanız önerilir.
 
+## Gölgelendirici Paketlerini Yönetme
 
-Eğer BukiLauncher ile ilgili bir sorununuz varsa GitHub sorunu açabilirsiniz.
+1. **Minecraft klasörünü aç** düğmesine tıklayın.
+2. `shaderpacks/` klasörüne girin.
 
-***
+### Gölgelendirici Paketi Kurma
+
+1. Gölgelendirici paketini kopyalayın.
+2. `shaderpacks/` klasörüne girin.
+3. Dosyayı buraya yapıştırın.
+
+## Destek
+
+Bir hata bulursanız veya öneriniz varsa GitHub üzerinden bir sorun (Issue) oluşturabilirsiniz.
+
+## Lisans
+
+Telif Hakkı (C) 2026 Buğra US
+
+Bu proje GNU General Public License v3.0 (GPL-3.0) altında lisanslanmıştır.
+
+Detaylar için LICENSE dosyasına bakın.
+
+\---
 
 # BukiLauncher - DE
 
-BukiLauncher ist ein einfacher und schneller Minecraft-Launcher. Mit BukiLauncher kannst du jede beliebige Vanilla-, Snapshot- oder Fabric-Version herunterladen und spielen.
+BukiLauncher ist ein schneller und benutzerfreundlicher Minecraft-Launcher. Du kannst Vanilla-, Snapshot- und Fabric-Versionen einfach herunterladen und spielen.
 
 ## Funktionen
 
 * Benutzerfreundliche Oberfläche
 * Fabric-Unterstützung
-* Java-Auswahloption
-* Unterstützung für 4 verschiedene Sprachen
+* Auswahl der Java-Datei
+* Unterstützung für 6 Sprachen
+* Integrierter Mod-Store
+* Portable Nutzung (keine Installation erforderlich)
 
 ## Installation
 
-Du musst BukiLauncher nicht installieren. Wenn du ihn als Anwendung heruntergeladen hast, entpacke die .zip-Datei und starte die Anwendung.
+1. Entpacke die heruntergeladene `.zip`-Datei.
+2. Starte `BukiLauncher.exe`.
 
 ## Mods installieren und verwalten
 
-Um Mods in BukiLauncher zu installieren, klicke auf den Tab "Mods" und dann auf "Mod hinzufügen". Wähle anschließend den heruntergeladenen Mod aus. Der ausgewählte Mod wird installiert und erscheint in der Liste an der Seite.
+### Mods herunterladen
 
-**Hinweis:** Mods funktionieren nicht, wenn Fabric nicht aktiviert ist.
+1. Öffne den **Mod-Store**.
+2. Suche nach einem Mod.
+3. Klicke auf die Schaltfläche zum Herunterladen.
 
-## Welten und Shader verwalten
+### Mods entfernen
 
-### Welten verwalten
+1. Wähle den Mod aus.
+2. Klicke auf die Schaltfläche zum Entfernen.
 
-Um deine Welten in Minecraft zu verwalten; Klicken Sie mit der rechten Maustaste auf die Schaltfläche "Minecraft-Ordner öffnen" und wählen Sie im Kontextmenü "Weltordner öffnen". Hier sehen Sie Ihre Welten.
+### Mods importieren
 
-**Hinweis:** Das Bearbeiten Ihrer Weltdateien kann Ihre Welt beschädigen.
+Externe Mods können über die Funktion **Mod importieren** installiert werden.
 
-### Shader verwalten
+> Hinweis: Fabric muss aktiviert sein, damit Mods funktionieren.
 
-Um die mit BukiLauncher heruntergeladenen Minecraft-Versionen zu verwalten, klicken Sie mit der rechten Maustaste auf die Schaltfläche "Minecraft-Ordner öffnen" und wählen Sie im Kontextmenü "Shader-Ordner öffnen". Hier sehen Sie die installierten Shader-Pakete.
+## Support
 
-Um ein Shader-Paket zu installieren, kopieren Sie das heruntergeladene Shader-Paket, klicken Sie mit der rechten Maustaste auf die Schaltfläche "Minecraft-Ordner öffnen" und wählen Sie im Kontextmenü "Shader-Ordner öffnen". Fügen Sie das kopierte Shader-Paket ein.
+Falls du einen Fehler findest oder einen Vorschlag hast, erstelle bitte ein GitHub-Issue.
 
+## Lizenz
 
-Bei Problemen mit BukiLauncher können Sie ein GitHub-Issue erstellen.
+Copyright (C) 2026 Buğra US
 
-***
+Dieses Projekt ist unter der GNU General Public License v3.0 (GPL-3.0) lizenziert.
 
-BukiLauncher — это простой и быстрый лаунчер для Minecraft. С помощью BukiLauncher вы можете загрузить и играть в любую версию Minecraft: Vanilla, Snapshot или Fabric.
+Weitere Informationen findest du in der LICENSE-Datei.
 
-## Особенности
+\---
+
+# BukiLauncher - RU
+
+BukiLauncher — это быстрый и удобный лаунчер Minecraft. Вы можете легко скачивать и запускать версии Vanilla, Snapshot и Fabric.
+
+## Возможности
 
 * Удобный интерфейс
 * Поддержка Fabric
-* Возможность выбора Java
-* Поддержка 4 разных языков
+* Выбор исполняемого файла Java
+* Поддержка 6 языков
+* Встроенный магазин модов
+* Портативное использование (без установки)
 
 ## Установка
 
-Установка BukiLauncher не требуется. Если вы загрузили его как приложение, распакуйте файл `.zip` и запустите приложение.
+1. Распакуйте загруженный файл `.zip`.
+2. Запустите `BukiLauncher.exe`.
 
 ## Установка и управление модами
 
-Чтобы установить моды в BukiLauncher, перейдите на вкладку «Моды» и нажмите кнопку «Добавить мод». Затем выберите загруженный мод. Выбранный мод будет установлен и появится в списке сбоку.
+### Загрузка модов
 
-**Примечание:** Моды не будут работать, если Fabric не активен.
+1. Откройте страницу **Магазин модов**.
+2. Найдите нужный мод.
+3. Нажмите кнопку загрузки.
 
-## Управление мирами и шейдерами
+### Удаление модов
 
-### Управление мирами
+1. Выберите мод.
+2. Нажмите кнопку удаления.
 
-Чтобы управлять своими мирами в Minecraft; Щелкните правой кнопкой мыши по кнопке «Открыть папку Minecraft» и выберите пункт «Открыть папку мира» в открывшемся меню. Здесь вы увидите свои миры.
+### Импорт модов
 
-**Примечание:** Изменение файлов мира может привести к его повреждению.
+Вы можете устанавливать внешние моды с помощью функции **Импорт мода**.
 
-### Управление шейдерами
+> Примечание: Для работы модов необходимо включить Fabric.
 
-Чтобы управлять версиями Minecraft, загруженными из BukiLauncher, щелкните правой кнопкой мыши по кнопке «Открыть папку Minecraft» и выберите пункт «Открыть папку шейдеров» в меню. Здесь вы увидите установленные вами пакеты шейдеров.
+## Поддержка
 
-Чтобы установить пакет шейдеров, скопируйте загруженный пакет, щелкните правой кнопкой мыши по кнопке «Открыть папку Minecraft» и выберите пункт «Открыть папку шейдеров» в меню. Вставьте скопированный пакет шейдеров.
+Если вы нашли ошибку или хотите предложить улучшение, создайте Issue на GitHub.
 
-Если у вас возникла проблема с BukiLauncher, вы можете создать заявку на GitHub.
+## Лицензия
+
+Copyright (C) 2026 Buğra US
+
+Этот проект распространяется по лицензии GNU General Public License v3.0 (GPL-3.0).
+
+Подробности смотрите в файле LICENSE.
+
