@@ -6,11 +6,7 @@
         "Java: seçildi",
         "Java: seçilmedi",
         "JVM argümanlarını düzenle",
-        "Dil",
-        "Dünya klasörünü aç",
-        "Kaynak paketi klasörünü aç",
-        "Gölgelendirici klasörünü aç",
-        "Mod klasörünü aç"
+        "Dil"
     ],
     "english": [
         "Show snapshots",
@@ -19,11 +15,7 @@
         "Java: selected",
         "Java: not selected",
         "Edit JVM arguments",
-        "Language",
-        "Open world folder",
-        "Open resource pack folder",
-        "Open shader folder",
-        "Open mod folder"
+        "Language"
     ],
     "german": [
         "Snapshots anzeigen",
@@ -32,11 +24,7 @@
         "Java: ausgewählt",
         "Java: nicht ausgewählt",
         "JVM-Argumente bearbeiten",
-        "Sprache",
-        "Weltordner öffnen",
-        "Ressourcenpaket-Ordner öffnen",
-        "Shader-Ordner öffnen",
-        "Mod-Ordner öffnen"
+        "Sprache"
     ],
     "russian": [
         "Показать снимки",
@@ -45,11 +33,7 @@
         "Java: выбрано",
         "Java: не выбрано",
         "Редактировать аргументы JVM",
-        "Язык",
-        "Открыть папку мира",
-        "Открыть папку ресурспаков",
-        "Открыть папку шейдеров",
-        "Открыть папку модов"
+        "Язык"
     ],
     "spanish": [
         "Mostrar snapshots",
@@ -58,11 +42,7 @@
         "Java: seleccionado",
         "Java: no seleccionado",
         "Editar argumentos JVM",
-        "Idioma",
-        "Abrir carpeta del mundo",
-        "Abrir carpeta de paquetes de recursos",
-        "Abrir carpeta de shaders",
-        "Abrir carpeta de mods"
+        "Idioma"
     ],
     "french": [
         "Afficher les snapshots",
@@ -71,10 +51,6 @@
         "Java : sélectionné",
         "Java : non sélectionné",
         "Modifier les arguments JVM",
-        "Langue",
-        "Ouvrir le dossier des mondes",
-        "Ouvrir le dossier des packs de ressources",
-        "Ouvrir le dossier des shaders",
-        "Ouvrir le dossier des mods"
+        "Langue"
     ]
 }

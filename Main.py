@@ -4,11 +4,12 @@ from tkinter import filedialog
 import minecraft_launcher_lib
 import subprocess, threading, json, os, sys
 import ctypes
-import socket
+import requests
 from ToolTip import ToolTip
 from ErrorHandler import error_handler
 from JVMArgumentsEditor import edit_jvm_arguments
-from ModManagement import *
+from About import about
+from ModStore import mod_store
 
 myappid = 'com.usbugraus.bukilauncher'
 ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
@@ -32,17 +33,7 @@ menu_labels = {}
 labels = {}
 dialogs = {}
 tabs = {}
-default_configuration = {
-    "username": "Player",
-    "version": "26.1.2",
-    "java_path": None,
-    "fabric": None,
-    "snapshots": False,
-    "hide_when_start": True,
-    "language": "english",
-    "show_tooltip": True,
-    "jvm_arguments": []
-}
+
 
 if hasattr(sys, "_MEIPASS"):
     icon_path = os.path.join(sys._MEIPASS, "Icon.ico")
@@ -60,6 +51,9 @@ with open(os.path.join(data_directory, "Labels.json"), "r", encoding="utf-8") as
     
 with open(os.path.join(data_directory, "Dialogs.json"), "r", encoding="utf-8") as f:
     dialog_dict = json.load(f)
+
+with open(os.path.join(data_directory, "DefaultConfiguration.json"), "r", encoding="utf-8") as f:
+    default_configuration = json.load(f)
     
 if not os.path.exists(mc_dir):
     os.makedirs(mc_dir, exist_ok=True)
@@ -82,13 +76,32 @@ else:
     messagebox.showwarning("Warning", "The configuration file has been moved to another location or deleted. Therefore, the settings have been reset.")
     configuration = default_configuration.copy()
     
-def is_connected(host="8.8.8.8", port=53, timeout=3):
-    try:
-        socket.setdefaulttimeout(timeout)
-        socket.socket(socket.AF_INET, socket.SOCK_STREAM).connect((host, port))
-        return True
-    except Exception:
-        return False
+def is_connected(timeout=3):
+    test_urls = [
+        "https://piston-meta.mojang.com",
+        "https://launchermeta.mojang.com",
+        "https://api.minecraftservices.com"
+    ]
+
+    headers = {
+        "User-Agent": "BukiLauncher"
+    }
+
+    for url in test_urls:
+        try:
+            response = requests.get(
+                url,
+                timeout=timeout,
+                headers=headers
+            )
+
+            if response.status_code < 500:
+                return True
+
+        except requests.RequestException:
+            pass
+
+    return False
     
 if is_connected():
     if configuration["snapshots"]:
@@ -103,8 +116,11 @@ if is_connected():
             for v in minecraft_launcher_lib.utils.get_version_list()
             if v["type"] == "release"
         ]
-else:     
-    mc_versions = []
+else:
+    mc_versions = [
+        v["id"]
+        for v in minecraft_launcher_lib.utils.get_installed_versions(mc_dir)
+    ]
     
 versions = mc_versions.copy()
 
@@ -134,25 +150,17 @@ def is_vanilla_installed(mc_version: str) -> bool:
         for v in installed
     )
     
-def open_dir(dir=""):
+def open_dir():
     global mc_dir
     if not os.path.exists(mc_dir):
         os.makedirs(mc_dir, exist_ok=True)
 
-    if not dir.strip():
-        if sys.platform == "win32":
-            os.startfile(mc_dir)
-        elif sys.platform == "darwin":
-            os.system(f'open "{mc_dir}"')
-        else:
-            os.system(f'xdg-open "{mc_dir}"')
+    if sys.platform == "win32":
+        os.startfile(os.path.join(mc_dir))
+    elif sys.platform == "darwin":
+        os.system(f'open "{os.path.join(mc_dir)}"')
     else:
-        if sys.platform == "win32":
-            os.startfile(os.path.join(mc_dir, dir))
-        elif sys.platform == "darwin":
-            os.system(f'open "{os.path.join(mc_dir, dir)}"')
-        else:
-            os.system(f'xdg-open "{os.path.join(mc_dir, dir)}"')
+        os.system(f'xdg-open "{os.path.join(mc_dir)}"')
         
 def select_java():
     global dialogs
@@ -167,17 +175,63 @@ def select_java():
 def launch():
     threading.Thread(target=launch_game, daemon=True).start()
 
+def show_progress(text):
+    def update():
+        progress_label.config(text=text)
+
+        if not progress_label.winfo_ismapped():
+            progress_label.pack(
+                padx=20,
+                pady=(0, 20),
+                fill="x"
+            )
+
+    win.after(0, update)
+
+def install_fabric(mc_version, loader):
+    try:
+        minecraft_launcher_lib.fabric.install_fabric(
+            minecraft_version=mc_version,
+            loader_version=loader,
+            minecraft_directory=mc_dir
+        )
+    except Exception:
+        error_handler(*sys.exc_info(), language=language.get())
+        win.after(0, lambda: start_button.config(state="normal"))
+        return False
+
+    return True
+
+def hide_progress():
+    win.after(0, progress_label.pack_forget)
+
+
+def set_status(text):
+    def update():
+        display_text = text if len(text) <= 30 else text[:30] + "..."
+
+        progress_label.config(text=display_text)
+
+        if not progress_label.winfo_ismapped():
+            progress_label.pack(
+                padx=20,
+                pady=(0, 20),
+                fill="x"
+            )
+
+    win.after(0, update)
+
 def launch_game():
     global process, mc_dir, dialogs
+
     try:
-        win.after(0, lambda: progress_label.pack(padx=20, pady=(0, 20), fill="x"))
 
         if process and process.poll() is None:
             win.after(0, lambda: messagebox.showwarning(
                 dialogs["mc_warn"][0],
                 dialogs["mc_warn"][1]
             ))
-            win.after(0, progress_label.pack_forget)
+            hide_progress()
             return
 
         if not java_path:
@@ -185,14 +239,22 @@ def launch_game():
                 dialogs["non_java"][0],
                 dialogs["non_java"][1]
             ))
-            win.after(0, progress_label.pack_forget)
+            hide_progress()
             return
 
         if java_path == "rick":
             import webbrowser
-            webbrowser.open("https://www.youtube.com/watch?v=dQw4w9WgXcQ")
-            win.after(0, progress_label.pack_forget)
-            win.after(0, lambda: start_button.config(state="normal"))
+
+            webbrowser.open(
+                "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
+            )
+
+            hide_progress()
+
+            win.after(
+                0,
+                lambda: start_button.config(state="normal")
+            )
             return
 
         username = username_entry.get()
@@ -209,13 +271,33 @@ def launch_game():
             }
 
             if version_id not in installed:
-                win.after(0, lambda: start_button.config(state="disabled"))
-                win.after(0, lambda: progress_label.config(text=tooltip_labels[8]))
+                if is_connected():
+                    win.after(
+                        0,
+                        lambda: start_button.config(state="disabled")
+                    )
 
-                ok = install_fabric(mc_version, loader)
-                if not ok:
-                    win.after(0, lambda: progress_label.config(text=""))
-                    win.after(0, progress_label.pack_forget)
+                    show_progress(tooltip_labels[4])
+
+                    ok = install_fabric(
+                        mc_version,
+                        loader
+                    )
+
+                    if not ok:
+                        hide_progress()
+                        return
+
+                else:
+                    win.after(
+                        0,
+                        lambda: messagebox.showerror(
+                            dialogs["ver_err"][0],
+                            dialogs["ver_err"][1]
+                        )
+                    )
+
+                    hide_progress()
                     return
 
             version = version_id
@@ -225,7 +307,8 @@ def launch_game():
                 dialogs["non_name"][0],
                 dialogs["non_name"][1]
             ))
-            win.after(0, progress_label.pack_forget)
+
+            hide_progress()
             return
 
         if not version:
@@ -233,7 +316,8 @@ def launch_game():
                 dialogs["non_ver"][0],
                 dialogs["non_ver"][1]
             ))
-            win.after(0, progress_label.pack_forget)
+
+            hide_progress()
             return
 
         installed_versions = {
@@ -242,14 +326,35 @@ def launch_game():
         }
 
         if version not in installed_versions:
-            win.after(0, lambda: start_button.config(state="disabled"))
-            win.after(0, lambda: progress_label.config(text=tooltip_labels[9]))
+            if is_connected():
+                win.after(
+                    0,
+                    lambda: start_button.config(state="disabled")
+                )
 
-            callback = {"setStatus": set_status}
+                show_progress(tooltip_labels[5])
 
-            minecraft_launcher_lib.install.install_minecraft_version(
-                version, mc_dir, callback=callback
-            )
+                callback = {
+                    "setStatus": set_status
+                }
+
+                minecraft_launcher_lib.install.install_minecraft_version(
+                    version,
+                    mc_dir,
+                    callback=callback
+                )
+
+            else:
+                win.after(
+                    0,
+                    lambda: messagebox.showerror(
+                        dialogs["ver_err"][0],
+                        dialogs["ver_err"][1]
+                    )
+                )
+
+                hide_progress()
+                return
 
         options = {
             "username": username,
@@ -260,7 +365,9 @@ def launch_game():
         }
 
         command = minecraft_launcher_lib.command.get_minecraft_command(
-            version, mc_dir, options
+            version,
+            mc_dir,
+            options
         )
 
         if isinstance(command, tuple):
@@ -273,58 +380,52 @@ def launch_game():
             command = command.split()
 
         win.after(0, lambda: (
-            win.withdraw() if hide_when_start.get() else progress_label.pack_forget()
+            win.withdraw()
+            if hide_when_start.get()
+            else hide_progress()
         ))
 
         process = subprocess.Popen(command)
 
         def wait_game():
             global process
+
             try:
                 if process is None:
                     return
+
                 process.wait()
+
             except Exception:
-                error_handler(*sys.exc_info(), language=language.get())
-                win.after(0, lambda: start_button.config(state="normal"))
+                error_handler(
+                    *sys.exc_info(),
+                    language=language.get()
+                )
+
             finally:
                 win.after(0, lambda: (
                     win.deiconify(),
-                    progress_label.pack_forget(),
+                    hide_progress(),
                     start_button.config(state="normal")
                 ))
 
-        if process is not None:
-            threading.Thread(target=wait_game, daemon=True).start()
+        threading.Thread(
+            target=wait_game,
+            daemon=True
+        ).start()
 
     except Exception:
-        error_handler(*sys.exc_info(), language=language.get())
-        win.after(0, progress_label.pack_forget)
-        win.after(0, lambda: start_button.config(state="normal"))
-
-def install_fabric(mc_version, loader):
-    mc_dir = minecraft_launcher_lib.utils.get_minecraft_directory()
-    
-    try:
-        minecraft_launcher_lib.fabric.install_fabric(
-            minecraft_version=mc_version,
-            loader_version=loader,
-            minecraft_directory=mc_dir
+        error_handler(
+            *sys.exc_info(),
+            language=language.get()
         )
-    except Exception:
-        error_handler(*sys.exc_info(), language=language.get())
-        win.after(0, lambda: start_button.config(state="normal"))
-        return False
 
-    return True
+        hide_progress()
 
-def set_status(text):
-    if len(text) < 30:
-        progress_label.config(text=text)
-    else:
-        progress_label.config(text=text[:30] + "...")
-        
-    win.update_idletasks()
+        win.after(
+            0,
+            lambda: start_button.config(state="normal")
+        )
     
 def save_settings():
     username = username_entry.get()
@@ -359,20 +460,12 @@ def save_on_exit():
     win.destroy()
     
 def show_about():
-    messagebox.showinfo(dialogs["about"][0], dialogs["about"][1])
-
-def load_mods(event=None):
-    mod_list.delete(0, tk.END)
-
-    if not os.path.exists(mod_dir):
-        os.makedirs(mod_dir, exist_ok=True)
-
-    for f in os.listdir(mod_dir):
-        if f.endswith(".jar"):
-            mod_list.insert(tk.END, f)
+    about(win, language=language.get())
     
 def update_settings(*args):
     global mc_versions, tooltip_labels, tooltip_dict, menu_dict, menu_labels, labels, label_dict, dialogs, dialog_dict, shortcut_command, java_path, mc_dir
+
+    fabric_loaders = ["None"]
 
     try:
         tooltip_labels = tooltip_dict[language.get()]
@@ -398,8 +491,50 @@ def update_settings(*args):
                 for v in minecraft_launcher_lib.utils.get_version_list()
                 if v["type"] == "release"
             ]
-    else:     
-        mc_versions = []
+        fabric_combobox.config(state="readonly")
+        try:
+            fabric_loaders = ["None"]
+
+            fabric_loaders_raw = minecraft_launcher_lib.fabric.get_all_loader_versions()
+
+            if isinstance(fabric_loaders_raw, tuple):
+                fabric_loaders_raw = fabric_loaders_raw[0]
+
+            fabric_loaders += [
+                v["version"]
+                for v in fabric_loaders_raw
+            ]
+
+            fabric_combobox.config(
+                values=fabric_loaders,
+                state="readonly"
+            )
+
+            current_fabric = configuration.get("fabric")
+
+            if current_fabric in fabric_loaders:
+                fabric_combobox.set(current_fabric)
+            else:
+                fabric_combobox.set("None")
+
+        except Exception:
+            fabric_combobox.config(
+                values=["None"],
+                state="disabled"
+            )
+            fabric_combobox.set("None")
+
+    else:
+        fabric_combobox.config(
+            values=["None"],
+            state="disabled"
+        )
+        fabric_combobox.set("None")
+
+    if configuration["fabric"] in fabric_loaders:
+        fabric_combobox.set(configuration["fabric"])
+    else:
+        fabric_combobox.set("None")
         
     version_combobox.config(values=mc_versions)
         
@@ -413,25 +548,13 @@ def update_settings(*args):
     settings_menu.entryconfig(3, label=menu_labels[3] if java_path else menu_labels[4])
     settings_menu.entryconfig(4, label=menu_labels[5])
     settings_menu.entryconfig(5, label=menu_labels[6])
-
-    open_menu.entryconfig(0, label=menu_labels[7])
-    open_menu.entryconfig(1, label=menu_labels[8])
-    open_menu.entryconfig(2, label=menu_labels[9])
     
     ToolTip(start_button, tooltip_labels[0], shown=tooltips.get())
     ToolTip(dir_button, tooltip_labels[1], shown=tooltips.get())
     ToolTip(settings_button, tooltip_labels[2], shown=tooltips.get())
     ToolTip(about_button, tooltip_labels[3], shown=tooltips.get())
-    ToolTip(add_button, tooltip_labels[4], shown=tooltips.get())
-    ToolTip(delete_button, tooltip_labels[5], shown=tooltips.get())
-    ToolTip(mod_dir_button, tooltip_labels[6], shown=tooltips.get())
-    ToolTip(modrinth_button, tooltip_labels[7], shown=tooltips.get())
+    ToolTip(store_button, tooltip_labels[10], shown=tooltips.get())
 
-    tab.tab(game_frame, text=labels[3])
-    tab.tab(mod_frame, text=labels[4])
-
-    load_mods()
-    
     save_settings()
 
 def set_jvmargs():
@@ -439,27 +562,6 @@ def set_jvmargs():
     jvmargs = edit_jvm_arguments(win, language=language.get(), args=jvm_arguments)
     jvm_arguments = jvmargs
     update_settings()
-
-def del_mod():
-    if mod_list.curselection():
-        selected_mod = mod_list.get(mod_list.curselection()[0])
-        deleted = delete_mod(os.path.join(mod_dir, selected_mod), language=language.get())
-        for i in range(mod_list.size()):
-            if mod_list.get(i) == deleted:
-                mod_list.delete(i)
-                break
-    else:
-        delete_button.config(state="disabled")
-
-def add_md():
-    added = add_mod(language=language.get())
-    mod_list.insert(tk.END, added)
-
-def check_selected(event=None):
-    if mod_list.curselection():
-        delete_button.config(state="normal")
-    else:
-        delete_button.config(state="disabled")
 
 win = tk.Tk()
 win.title("BukiLauncher")
@@ -498,90 +600,32 @@ style.map("MarkedToolbarButton.TButton", background=[("pressed", "#0040bf"), ("a
 style.configure("DangerToolbarButton.TButton", background="SystemButtonFace", foreground="#bf0000", relief=tk.FLAT, width=5, padding=(0, 5), font=("Segoe Fluent Icons", 10))
 style.map("DangerToolbarButton.TButton", background=[("pressed", "#bf0000"), ("active", "SystemButtonFace")], foreground=[("pressed", "#ffffff"), ("active", "#bf0000"), ("disabled", ("#804040"))])
 
-style.configure("TNotebook", background="SystemButtonFace")
-style.configure("TNotebook.Tab", background="SystemButtonFace")
-style.map("TNotebook.Tab", highlightcolor=[("selected", "#0040bf")], padding=[("selected", (8, 5))])
-
-style.configure("Treeview", focuscolor="#0040bf", focuswidth=2)
-style.map("Treeview", fieldbackground=[("active", "SystemButtonFace"), ("!active", "SystemButtonFace")], background=[("selected", "#0040bf")])
-style.configure("Treeview.Heading", background="SystemButtonFace")
-style.map("Treeview.Heading", background=[("active", "SystemButtonFace")])
-
 ttk.Label(win, text="BukiLauncher", font=("Segoe UI", 12, "bold")).pack(padx=20, pady=(20, 0))
 
-tab = ttk.Notebook(win)
-tab.pack(padx=20, pady=20, fill="x")
+main_frame = ttk.Frame(win, padding=10, style="Out.TFrame")
+main_frame.pack(padx=20, pady=20)
 
-game_frame = ttk.Frame(tab, padding=10)
-tab.add(game_frame, text="")
-
-username_label = ttk.Label(game_frame, text="")
+username_label = ttk.Label(main_frame, text="")
 username_label.grid(row=0, column=0, padx=(0, 5), pady=(0, 5))
 
-username_entry = ttk.Entry(game_frame, width=25)
+username_entry = ttk.Entry(main_frame, width=25)
 username_entry.grid(row=0, column=1, pady=(0, 5))
 username_entry.bind("<KeyRelease>", lambda e: save_settings())
 
-version_label = ttk.Label(game_frame, text="")
+version_label = ttk.Label(main_frame, text="")
 version_label.grid(row=1, column=0, padx=(0, 5))
  
-version_combobox = ttk.Combobox(game_frame, values=versions, state="readonly", width=20, takefocus=0)
+version_combobox = ttk.Combobox(main_frame, values=versions, state="readonly", width=20, takefocus=0)
 version_combobox.grid(row=1, column=1, sticky="ew")
 version_combobox.bind("<<ComboboxSelected>>", lambda e: save_settings())
 
-fabric_label = ttk.Label(game_frame, text="")
+fabric_label = ttk.Label(main_frame, text="")
 fabric_label.grid(row=2, column=0, padx=(0, 5), pady=(5, 0))
 
-fabric_loaders = ["None"]
-
-if is_connected():
-    try:
-        fabric_loaders_raw = minecraft_launcher_lib.fabric.get_all_loader_versions()
-
-        if isinstance(fabric_loaders_raw, tuple):
-            fabric_loaders_raw = fabric_loaders_raw[0]
-
-        fabric_loaders += [v["version"] for v in fabric_loaders_raw]
-
-    except Exception:
-        fabric_loaders = ["None"]
-else:
-    fabric_loaders = ["None"]
-
-fabric_combobox = ttk.Combobox(game_frame, values=fabric_loaders, state="readonly", width=20, takefocus=0)
+fabric_combobox = ttk.Combobox(main_frame, state="readonly", width=20, takefocus=0, values=["None"])
 fabric_combobox.grid(row=2, column=1, sticky="ew", pady=(5, 0))
     
 fabric_combobox.bind("<<ComboboxSelected>>", lambda e: save_settings())
-
-mod_frame = ttk.Frame(tab, padding=10)
-tab.add(mod_frame, text="")
-
-mod_list = tk.Listbox(
-    mod_frame,
-    height=3,
-    width=25,
-    bd=1,
-    highlightthickness=0,
-    selectbackground="#0040bf",
-    selectborderwidth=1,
-    selectforeground="#ffffff",
-)
-mod_list.pack(side="right", fill="both")
-
-mod_toolbar = ttk.Frame(mod_frame, style="Out.TFrame", padding=5)
-mod_toolbar.pack(side="left")
-
-add_button = ttk.Button(mod_toolbar, text="\uE109", style="MarkedToolbarButton.TButton", command=add_md)
-add_button.grid(row=0, column=0)
-
-delete_button = ttk.Button(mod_toolbar, text="\uE107", style="DangerToolbarButton.TButton", command=del_mod)
-delete_button.grid(row=0, column=1)
-
-mod_dir_button = ttk.Button(mod_toolbar, text="\uE19C", style="ToolbarButton.TButton", command=open_mod_dir)
-mod_dir_button.grid(row=1, column=0)
-
-modrinth_button = ttk.Button(mod_toolbar, text="\uE12B", style="ToolbarButton.TButton", command=open_modrinth)
-modrinth_button.grid(row=1, column=1)
 
 toolbar_frame = ttk.Frame(win)
 toolbar_frame.pack(fill="x")
@@ -597,10 +641,12 @@ start_button.grid(row=0, column=0)
 
 dir_button = ttk.Button(opt_toolbar, text="\uE19C", command=open_dir, style="ToolbarButton.TButton")
 dir_button.grid(row=0, column=1)
-dir_button.bind('<ButtonRelease-3>', lambda event: open_menu.tk_popup(event.x_root, event.y_root))
+
+store_button = ttk.Button(opt_toolbar, text="\uE74C", command=lambda: mod_store(win, language=language.get(), version=version_combobox.get()), style="ToolbarButton.TButton")
+store_button.grid(row=0, column=2)
 
 settings_button = ttk.Button(opt_toolbar, text="\uE115", style="ToolbarButton.TButton")
-settings_button.grid(row=0, column=2)
+settings_button.grid(row=0, column=3)
 settings_button.bind('<ButtonRelease-1>', lambda event: settings_menu.tk_popup(event.x_root, event.y_root))
 
 about_button = ttk.Button(about_toolbar, text="\uE946", command=show_about, style="ToolbarButton.TButton")
@@ -610,11 +656,6 @@ progress_label = tk.Label(win, text="")
 
 username_entry.insert(0, configuration["username"])
 version_combobox.set(configuration["version"])
-
-if configuration["fabric"] is not None:
-    fabric_combobox.set(configuration["fabric"])
-else:
-    fabric_combobox.set(fabric_combobox.cget("values")[0])
 
 def is_snapshot(version):
     return any(c.isalpha() for c in version)
@@ -630,11 +671,6 @@ def select_warning(event):
         messagebox.showwarning(dialogs["old_warn"][0], dialogs["old_warn"][1])
         
 version_combobox.bind("<<ComboboxSelected>>", select_warning, add="+")
-
-if configuration["fabric"] in fabric_loaders:
-    fabric_combobox.set(configuration["fabric"])
-else:
-    fabric_combobox.set("None")
     
 settings_menu = tk.Menu(win, tearoff=0, activebackground="#0040bf", activeforeground="#ffffff")
 settings_menu.add_checkbutton(label="", onvalue=True, offvalue=False, variable=show_snapshots, command=update_settings)
@@ -653,16 +689,10 @@ lang_menu.add_radiobutton(label='Français', variable=language, value="french", 
 
 settings_menu.add_cascade(menu=lang_menu, label="")
 
-open_menu = tk.Menu(win, tearoff=0, activebackground="#0040bf", activeforeground="#ffffff")
-open_menu.add_command(label="", command=lambda: open_dir("saves"))
-open_menu.add_command(label="", command=lambda: open_dir("resourcepacks"))
-open_menu.add_command(label="", command=lambda: open_dir("shaderpacks"))
-
 update_settings()
 
 if not is_connected():
     messagebox.showwarning(dialogs["intr"][0], dialogs["intr"][1])
 
 win.protocol("WM_DELETE_WINDOW", save_on_exit)
-win.bind("<Button-1>", check_selected)
 win.mainloop()

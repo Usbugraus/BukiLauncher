@@ -3,42 +3,72 @@
         "Kullanıcı adı: ",
         "Sürüm: ",
         "Fabric yükleyici: ",
-        "Genel",
-        "Modlar"
+        "İndiriliyor...",
+        "İndirildi.",
+        "İndirme başarısız.",
+        "Silindi.",
+        "Silinemedi.",
+        "(Açıklama yok)",
+        "Modlar yüklenemedi."
     ],
     "english": [
         "Username: ",
         "Version: ",
         "Fabric loader: ",
-        "General",
-        "Mods"
+        "Downloading...",
+        "Downloaded.",
+        "Download failed.",
+        "Deleted.",
+        "Could not be deleted.",
+        "(No description)",
+        "Mods could not be loaded."
     ],
     "german": [
         "Benutzername: ",
         "Version: ",
         "Fabric-Loader: ",
-        "Allgemein",
-        "Mods"
+        "Wird heruntergeladen...",
+        "Heruntergeladen.",
+        "Download fehlgeschlagen.",
+        "Gelöscht.",
+        "Konnte nicht gelöscht werden.",
+        "(Keine Beschreibung)",
+        "Mods konnten nicht geladen werden."
     ],
     "russian": [
         "Имя пользователя: ",
         "Версия: ",
-        "Fabric загрузчик: ",
-        "Общий",
-        "Моды"
+        "Загрузчик Fabric: ",
+        "Загрузка...",
+        "Загружено.",
+        "Ошибка загрузки.",
+        "Удалено.",
+        "Не удалось удалить.",
+        "(Нет описания)",
+        "Моды не удалось загрузить."
     ],
     "spanish": [
         "Nombre de usuario: ",
         "Versión: ",
         "Cargador de Fabric: ",
-        "General",
-        "Mods"
+        "Descargando...",
+        "Descargado.",
+        "Error en la descarga.",
+        "Eliminado.",
+        "No se pudo eliminar.",
+        "(Sin descripción)",
+        "No se pudieron cargar los mods."
     ],
     "french": [
         "Nom d'utilisateur : ",
         "Version : ",
         "Chargeur Fabric : ",
-        "Général",
-        "Mods"
+        "Téléchargement...",
+        "Téléchargé.",
+        "Échec du téléchargement.",
+        "Supprimé.",
+        "Impossible de supprimer.",
+        "(Aucune description)",
+        "Impossible de charger les mods."
     ]
 }

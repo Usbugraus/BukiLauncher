@@ -1,6 +1,7 @@
 import tkinter as tk
 from tkinter import ttk
 import os, json, sys
+from ToolWindow import toolwindow
 
 data_directory = os.path.join(os.path.dirname(__file__), "Data")
 
@@ -29,6 +30,7 @@ def edit_jvm_arguments(parent, language="english", args=[]):
     win.transient(parent)
     win.focus_force()
     win.grab_set()
+    toolwindow(win)
 
     if os.path.exists(icon_path):
         win.iconbitmap(icon_path)
