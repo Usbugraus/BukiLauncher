@@ -5,8 +5,6 @@
 * [Deutsch](#bukilauncher---de)
 * [Русский](#bukilauncher---ru)
 
-
-
 # BukiLauncher - EN
 
 BukiLauncher is a fast and easy-to-use Minecraft launcher. You can easily download and play Vanilla, Snapshot, and Fabric versions.
@@ -14,67 +12,41 @@ BukiLauncher is a fast and easy-to-use Minecraft launcher. You can easily downlo
 ## Features
 
 * User-friendly interface
-* Fabric support
-* Java executable selection
-* 6 language options
+* Fabric, Forge, NeoForge, and Quilt support
+* Ability to select Java executable files
+* Support for 6 different languages
 * Built-in mod store
-* Portable (no installation required)
+* Portable use (no installation required)
 
 ## Installation
 
-BukiLauncher does not require installation.
+BukiLauncher requires no installation.
 
 1. Extract the downloaded `.zip` file.
-2. Run `BukiLauncher.exe`.
+2. Run the `BukiLauncher.exe` file.
 
-That's it!
+That's all!
 
 ## Installing and Managing Mods
 
 ### Downloading Mods
 
-1. Open the **Mod Store** page.
+1. Open the mod store.
 2. Search for the mod you want.
 3. Click the download button.
 
-Use the page buttons at the bottom to navigate between pages.
+### Deleting Mods
 
-### Removing Mods
-
-1. Select the mod you want to remove from the installed mods list.
-2. Click the remove button.
+1. Select the mod you want to delete.
+2. Click the delete button.
 
 ### Importing Mods
 
-You can install external mod files using the **Import Mod** feature.
-
-> Note: Fabric must be enabled for mods to work.
-
-## Managing Worlds
-
-To access your Minecraft worlds:
-
-1. Click **Open Minecraft Folder**.
-2. Open the `saves/` folder.
-
-> Warning: Modifying world files may corrupt your worlds. Backups are recommended.
-
-## Managing Shader Packs
-
-To manage shader packs:
-
-1. Click **Open Minecraft Folder**.
-2. Open the `shaderpacks/` folder.
-
-### Installing a Shader Pack
-
-1. Copy the downloaded shader pack.
-2. Open the `shaderpacks/` folder.
-3. Paste the shader pack into the folder.
+To import external mods, click the "Import Mod" button in the mod store and select your external mod.
 
 ## Support
 
-If you find a bug or have a suggestion, please open an issue on GitHub.
+If you find a bug or have a suggestion, you can create an issue on GitHub.
 
 ## License
 
@@ -83,7 +55,6 @@ Copyright (C) 2026 Buğra US
 This project is licensed under the GNU General Public License v3.0 (GPL-3.0).
 
 See the LICENSE file for details.
-
 \---
 
 # BukiLauncher - TR
@@ -93,7 +64,7 @@ BukiLauncher, hızlı ve kullanımı kolay bir Minecraft başlatıcısıdır. Va
 ## Özellikler
 
 * Kullanıcı dostu arayüz
-* Fabric desteği
+* Fabric, Forge, NeoForge ve Quilt desteği
 * Java yürütülebilir dosyası seçebilme
 * 6 farklı dil desteği
 * Yerleşik mod mağazası
@@ -112,7 +83,7 @@ Hepsi bu kadar!
 
 ### Mod İndirme
 
-1. **Mod Mağazası** sayfasını açın.
+1. Mod mağazasını açın
 2. İstediğiniz modu arayın.
 3. İndirme düğmesine tıklayın.
 
@@ -123,27 +94,7 @@ Hepsi bu kadar!
 
 ### Mod İçe Aktarma
 
-Harici mod dosyalarını **Mod İçe Aktar** özelliği ile yükleyebilirsiniz.
-
-> Not: Modların çalışabilmesi için Fabric etkin olmalıdır.
-
-## Dünyaları Yönetme
-
-1. **Minecraft klasörünü aç** düğmesine tıklayın.
-2. `saves/` klasörüne girin.
-
-> Uyarı: Dünya dosyalarını değiştirmeniz durumunda dünyanız bozulabilir. Yedek almanız önerilir.
-
-## Gölgelendirici Paketlerini Yönetme
-
-1. **Minecraft klasörünü aç** düğmesine tıklayın.
-2. `shaderpacks/` klasörüne girin.
-
-### Gölgelendirici Paketi Kurma
-
-1. Gölgelendirici paketini kopyalayın.
-2. `shaderpacks/` klasörüne girin.
-3. Dosyayı buraya yapıştırın.
+Harici modları içe aktarmak için mod mağazasındaki "Mod içe aktar" düğmesine tıklayın ve harici modunuzu seçin.
 
 ## Destek
 
@@ -161,44 +112,50 @@ Detaylar için LICENSE dosyasına bakın.
 
 # BukiLauncher - DE
 
-BukiLauncher ist ein schneller und benutzerfreundlicher Minecraft-Launcher. Du kannst Vanilla-, Snapshot- und Fabric-Versionen einfach herunterladen und spielen.
+BukiLauncher ist ein schneller und benutzerfreundlicher Minecraft-Launcher. Du kannst Vanilla-, Snapshot- und Fabric-Versionen ganz einfach herunterladen und spielen.
 
 ## Funktionen
 
 * Benutzerfreundliche Oberfläche
-* Fabric-Unterstützung
-* Auswahl der Java-Datei
-* Unterstützung für 6 Sprachen
+* Unterstützung für Fabric, Forge, NeoForge und Quilt
+* Auswahl von Java-Executable-Dateien möglich
+* Unterstützung für 6 verschiedene Sprachen
 * Integrierter Mod-Store
-* Portable Nutzung (keine Installation erforderlich)
+* Portabel nutzbar (keine Installation erforderlich)
 
 ## Installation
 
-1. Entpacke die heruntergeladene `.zip`-Datei.
-2. Starte `BukiLauncher.exe`.
+BukiLauncher benötigt keine Installation.
+
+1. Entpacke die heruntergeladene .zip-Datei.
+
+2. Führe die Datei „BukiLauncher.exe“ aus.
+
+Fertig!
 
 ## Mods installieren und verwalten
 
 ### Mods herunterladen
 
-1. Öffne den **Mod-Store**.
-2. Suche nach einem Mod.
-3. Klicke auf die Schaltfläche zum Herunterladen.
+1. Öffne den Mod-Store.
 
-### Mods entfernen
+2. Suche nach dem gewünschten Mod.
 
-1. Wähle den Mod aus.
-2. Klicke auf die Schaltfläche zum Entfernen.
+3. Klicke auf den Download-Button.
+
+### Mods löschen
+
+1. Wähle den Mod aus, den du löschen möchtest.
+
+2. Klicken Sie auf die Schaltfläche „Löschen“.
 
 ### Mods importieren
 
-Externe Mods können über die Funktion **Mod importieren** installiert werden.
-
-> Hinweis: Fabric muss aktiviert sein, damit Mods funktionieren.
+Um externe Mods zu importieren, klicken Sie im Mod-Shop auf die Schaltfläche „Mod importieren“ und wählen Sie Ihre externe Mod aus.
 
 ## Support
 
-Falls du einen Fehler findest oder einen Vorschlag hast, erstelle bitte ein GitHub-Issue.
+Wenn Sie einen Fehler finden oder einen Verbesserungsvorschlag haben, können Sie ein Issue auf GitHub erstellen.
 
 ## Lizenz
 
@@ -206,56 +163,61 @@ Copyright (C) 2026 Buğra US
 
 Dieses Projekt ist unter der GNU General Public License v3.0 (GPL-3.0) lizenziert.
 
-Weitere Informationen findest du in der LICENSE-Datei.
+Details finden Sie in der Datei LICENSE.
 
 \---
 
 # BukiLauncher - RU
 
-BukiLauncher — это быстрый и удобный лаунчер Minecraft. Вы можете легко скачивать и запускать версии Vanilla, Snapshot и Fabric.
+BukiLauncher — это быстрый и простой в использовании лаунчер для Minecraft. Вы можете легко скачать и играть в версии Vanilla, Snapshot и Fabric.
 
-## Возможности
+## Особенности
 
 * Удобный интерфейс
-* Поддержка Fabric
-* Выбор исполняемого файла Java
-* Поддержка 6 языков
+* Поддержка Fabric, Forge, NeoForge и Quilt
+* Возможность выбора исполняемых файлов Java
+* Поддержка 6 различных языков
 * Встроенный магазин модов
-* Портативное использование (без установки)
+* Портативное использование (установка не требуется)
 
 ## Установка
 
+BukiLauncher не требует установки.
+
 1. Распакуйте загруженный файл `.zip`.
-2. Запустите `BukiLauncher.exe`.
+
+2. Запустите файл `BukiLauncher.exe`.
+
+Вот и все!
 
 ## Установка и управление модами
 
 ### Загрузка модов
 
-1. Откройте страницу **Магазин модов**.
+1. Откройте магазин модов.
+
 2. Найдите нужный мод.
+
 3. Нажмите кнопку загрузки.
 
 ### Удаление модов
 
-1. Выберите мод.
+1. Выберите мод, который хотите удалить.
+
 2. Нажмите кнопку удаления.
 
 ### Импорт модов
 
-Вы можете устанавливать внешние моды с помощью функции **Импорт мода**.
-
-> Примечание: Для работы модов необходимо включить Fabric.
+Чтобы импортировать внешние моды, нажмите кнопку «Импорт мода» в магазине модов и выберите свой внешний мод.
 
 ## Поддержка
 
-Если вы нашли ошибку или хотите предложить улучшение, создайте Issue на GitHub.
+Если вы обнаружили ошибку или у вас есть предложение, вы можете создать заявку на GitHub.
 
 ## Лицензия
 
-Copyright (C) 2026 Buğra US
+Авторские права (C) 2026 Buğra US
 
-Этот проект распространяется по лицензии GNU General Public License v3.0 (GPL-3.0).
+Этот проект распространяется под лицензией GNU General Public License v3.0 (GPL-3.0).
 
-Подробности смотрите в файле LICENSE.
-
+Подробности см. в файле LICENSE.
