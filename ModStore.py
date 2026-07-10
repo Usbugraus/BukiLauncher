@@ -1,7 +1,7 @@
 import tkinter as tk
 from tkinter import ttk, filedialog
-import requests
-import os, sys, shutil, json
+import requests, hashlib
+import os, sys, shutil, json, zipfile
 import threading
 import minecraft_launcher_lib
 import ctypes
@@ -23,6 +23,7 @@ mc_mods_directory = os.path.join(
     "mods"
 )
 data_directory = os.path.join(os.path.dirname(__file__), "Data")
+configuration_file = "Configuration.json"
 
 with open(os.path.join(data_directory, "Dialogs.json"), "r", encoding="utf-8") as f:
     dialog_dict = json.load(f)
@@ -33,12 +34,14 @@ with open(os.path.join(data_directory, "Labels.json"), "r", encoding="utf-8") as
 with open(os.path.join(data_directory, "ToolTipLabels.json"), "r", encoding="utf-8") as f:
     tooltip_dict = json.load(f)
 
-def mod_store(parent, version="26.1.2", language="english"):
+def mod_store(parent, version="26.1.2", language="english", loader="fabric", tooltips=True):
     page = 0
     limit = 5
     total_hits = 0
     page_cache = {}
     file_cache = {}
+    search_var = tk.StringVar()
+    search_after_id = None
 
     try:
         dialogs = dialog_dict[language]
@@ -55,7 +58,6 @@ def mod_store(parent, version="26.1.2", language="english"):
         icon_path = os.path.join(os.path.dirname(__file__), "Icon.ico")
 
     def open_dir():
-        global mc_mods_directory
         if not os.path.exists(mc_mods_directory):
             os.makedirs(mc_mods_directory, exist_ok=True)
 
@@ -93,6 +95,8 @@ def mod_store(parent, version="26.1.2", language="english"):
     style.configure("Out.TFrame", background="SystemButtonFace", borderwidth=1, relief=tk.RAISED)
     style.configure("In.TFrame", background="SystemButtonFace", borderwidth=1, relief=tk.SUNKEN)
 
+    style.configure("TEntry", focuswidth=2, focuscolor="#0040bf", selectbackground="#0040bf")
+
     style.map("TButton", background="SystemButtonFace")
     style.map("TButton", background=[("pressed", "#ffff00"), ("active", "SystemButtonFace"), ("!active", "SystemButtonFace")])
     style.configure("ToolbarButton.TButton", background="SystemButtonFace", relief=tk.FLAT, width=5, padding=(0, 5), font=("Segoe Fluent Icons", 10))
@@ -101,6 +105,9 @@ def mod_store(parent, version="26.1.2", language="english"):
     style.map("MarkedToolbarButton.TButton", background=[("pressed", "#0040bf"), ("active", "SystemButtonFace")], foreground=[("pressed", "#ffffff"), ("active", "#0040bf"), ("disabled", "#bfbf00")])
     style.configure("DangerToolbarButton.TButton", background="SystemButtonFace", foreground="#bf0000", relief=tk.FLAT, width=5, padding=(0, 5), font=("Segoe Fluent Icons", 10))
     style.map("DangerToolbarButton.TButton", background=[("pressed", "#bf0000"), ("active", "SystemButtonFace")], foreground=[("pressed", "#ffffff"), ("active", "#bf0000"), ("disabled", ("#804040"))])
+
+    search_toolbar = ttk.Frame(win, style="Out.TFrame", padding=5)
+    search_toolbar.pack(padx=20, pady=(20, 0))
 
     container = ttk.Frame(win, width=800, height=500, style="Out.TFrame", padding=(10, 10, 10, 0))
     container.pack(padx=20, pady=(20, 0))
@@ -115,19 +122,11 @@ def mod_store(parent, version="26.1.2", language="english"):
     other_toolbar = ttk.Frame(toolbar_frame, style="Out.TFrame", padding=5)
     other_toolbar.grid(row=0, column=1, padx=(0, 20), pady=20)
 
-    open_dir_button = ttk.Button(other_toolbar, text="\uE19C", style="ToolbarButton.TButton", command=open_dir)
-    open_dir_button.grid(row=0, column=0)
-
-    import_button = ttk.Button(other_toolbar, text="\uE109", style="ToolbarButton.TButton", command=import_mod)
-    import_button.grid(row=0, column=1)
-
-    ToolTip(open_dir_button, tooltip_labels[8])
-    ToolTip(import_button, tooltip_labels[9])
 
     def fetch_mods():
         nonlocal total_hits
 
-        cache_key = (page, version)
+        cache_key = (page, version, loader, search_var.get().strip().lower())
 
         if cache_key in page_cache:
             total_hits = page_cache[cache_key]["total_hits"]
@@ -136,8 +135,12 @@ def mod_store(parent, version="26.1.2", language="english"):
         params = {
             "limit": limit,
             "offset": page * limit,
-            "facets": f'[["project_type:mod"],["versions:{version}"],["categories:fabric"]]'
+            "facets": f'[["project_type:mod"],["versions:{version}"],["categories:{loader}"]]'
         }
+
+        query = search_var.get().strip()
+        if query:
+            params["query"] = query
 
         r = requests.get(API_SEARCH, params=params)
         data = r.json()
@@ -156,7 +159,7 @@ def mod_store(parent, version="26.1.2", language="english"):
         versions = r.json()
 
         for version_info in versions:
-            if "fabric" not in version_info.get("loaders", []):
+            if loader not in version_info.get("loaders", []):
                 continue
 
             if version not in version_info.get("game_versions", []):
@@ -164,9 +167,15 @@ def mod_store(parent, version="26.1.2", language="english"):
 
             file_info = version_info["files"][0]
 
-            return file_info["url"], file_info["filename"]
+            return {
+                "version": version_info["version_number"],
+                "version_id": version_info["id"],
+                "url": file_info["url"],
+                "filename": file_info["filename"],
+                "sha1": file_info["hashes"]["sha1"]
+            }
 
-        return None, None
+        return None
 
     def clear():
         for w in container.winfo_children():
@@ -174,13 +183,20 @@ def mod_store(parent, version="26.1.2", language="english"):
 
     def truncate(text, n=150):
         if not text:
-            return labels[8]
+            return labels[10]
 
         return text if len(text) <= n else text[:n] + "..."
 
     def download_thread(slug, label):
         try:
-            url, filename = fetch_download(slug)
+            download = fetch_download(slug)
+
+            if download is None:
+                parent.after(0, lambda: label.config(text=labels[5]))
+                return
+
+            url = download["url"]
+            filename = download["filename"]
 
             if not url:
                 parent.after(0, lambda: label.config(text=labels[5]))
@@ -197,22 +213,46 @@ def mod_store(parent, version="26.1.2", language="english"):
 
             file_cache[slug] = filename
 
-            parent.after(0, lambda: label.config(text=labels[4]))
+            parent.after(0, lambda: label.config(text=labels[6]))
 
         except Exception:
-            parent.after(0, lambda: label.config(text=labels[5]))
+            parent.after(0, lambda: label.config(text=labels[7]))
+
+    def get_file_sha1(path):
+        h = hashlib.sha1()
+
+        with open(path, "rb") as f:
+            while chunk := f.read(8192):
+                h.update(chunk)
+
+        return h.hexdigest()
 
     def get_mod_file(slug):
-
-        if slug in file_cache:
-            filename = file_cache[slug]
-            path = os.path.join(mc_mods_directory, filename)
-            return path if os.path.exists(path) else None
+        if not os.path.exists(mc_mods_directory):
+            return None
 
         for file in os.listdir(mc_mods_directory):
-            if file.endswith(".jar") and slug.lower() in file.lower():
-                file_cache[slug] = file
-                return os.path.join(mc_mods_directory, file)
+            if not file.endswith(".jar"):
+                continue
+
+            path = os.path.join(mc_mods_directory, file)
+
+            try:
+                with zipfile.ZipFile(path) as jar:
+
+                    if "fabric.mod.json" in jar.namelist():
+                        data = json.loads(jar.read("fabric.mod.json"))
+
+                        if data.get("id") == slug:
+                            return {
+                                "path": path,
+                                "version": data.get("version", ""),
+                                "file": file,
+                                "sha1": get_file_sha1(path)
+                            }
+
+            except Exception:
+                pass
 
         return None
 
@@ -228,7 +268,7 @@ def mod_store(parent, version="26.1.2", language="english"):
         left = ttk.Frame(frame)
         left.pack(side="left", fill="both", expand=True)
 
-        title = tk.Label(
+        title = ttk.Label(
             left,
             text=mod["title"],
             font=("Segoe UI", 9, "bold")
@@ -236,7 +276,7 @@ def mod_store(parent, version="26.1.2", language="english"):
 
         title.pack(anchor="w")
 
-        desc = tk.Label(
+        desc = ttk.Label(
             left,
             text=truncate(mod.get("description", "")),
             wraplength=600,
@@ -245,51 +285,83 @@ def mod_store(parent, version="26.1.2", language="english"):
 
         desc.pack(anchor="w", padx=(0, 10))
 
-        status_label = tk.Label(
+        status_label = ttk.Label(
             frame,
             text="",
             width=15
         )
 
-        mod_path = get_mod_file(mod["slug"])
-
         def refresh_buttons():
             for widget in button_frame.winfo_children():
                 widget.destroy()
 
-            mod_path = None
+            installed = get_mod_file(mod["slug"])
+            download = fetch_download(mod["slug"])
 
-            if mod["slug"] in file_cache:
-                mod_path = os.path.join(
-                    mc_mods_directory,
-                    file_cache[mod["slug"]]
-                )
+            update_available = (
+                    installed is not None and
+                    download is not None and
+                    installed["sha1"] != download["sha1"]
+            )
 
-            if mod_path and os.path.exists(mod_path):
-                remove_btn = ttk.Button(
-                    button_frame,
-                    text="\uE107",
-                    style="DangerToolbarButton.TButton",
-                    command=remove_mod
-                )
-
-                remove_btn.pack(side="right")
-
-            else:
-                download_btn = ttk.Button(
+            if installed is None:
+                download_button = ttk.Button(
                     button_frame,
                     text="\uE118",
                     style="MarkedToolbarButton.TButton",
                     command=start_download_btn
                 )
 
-                download_btn.pack(side="right")
+                download_button.pack(side="right")
+
+            elif update_available:
+                update_button = ttk.Button(
+                    button_frame,
+                    text="\uE777",
+                    style="ToolbarButton.TButton",
+                    command=update_mod
+                )
+
+                update_button.pack(side="right")
+
+            else:
+                remove_button = ttk.Button(
+                    button_frame,
+                    text="\uE107",
+                    style="DangerToolbarButton.TButton",
+                    command=remove_mod
+                )
+
+                remove_button.pack(side="right")
 
             status_label.config(text="")
 
+        def update_mod():
+            installed = get_mod_file(mod["slug"])
+            download = fetch_download(mod["slug"])
+
+            if installed is None or download is None:
+                return
+
+            try:
+                os.remove(installed["path"])
+            except OSError:
+                pass
+
+            status_label.pack(side="right", padx=10)
+            status_label.config(text=labels[5])
+
+            threading.Thread(
+                target=download_thread,
+                args=(mod["slug"], status_label),
+                daemon=True
+            ).start()
+
+            check_download()
+
         def start_download_btn():
             status_label.pack(side="right", padx=10)
-            status_label.config(text=labels[3])
+            status_label.config(text=labels[5])
 
             threading.Thread(
                 target=download_thread,
@@ -314,25 +386,21 @@ def mod_store(parent, version="26.1.2", language="english"):
 
         def remove_mod():
             try:
-                if mod["slug"] not in file_cache:
+                installed = get_mod_file(mod["slug"])
+
+                if installed is None:
                     return
 
-                mod_path = os.path.join(
-                    mc_mods_directory,
-                    file_cache[mod["slug"]]
-                )
+                os.remove(installed["path"])
 
-                if os.path.exists(mod_path):
-                    os.remove(mod_path)
-
-                del file_cache[mod["slug"]]
-
-                status_label.config(text=labels[6])
+                status_label.pack(side="right", padx=10)
+                status_label.config(text=labels[8])
 
                 refresh_buttons()
 
             except Exception:
-                status_label.config(text=labels[7])
+                status_label.pack(side="right", padx=10)
+                status_label.config(text=labels[9])
 
         button_frame = ttk.Frame(frame)
         button_frame.pack(side="right")
@@ -342,11 +410,11 @@ def mod_store(parent, version="26.1.2", language="english"):
     def load_page():
         clear()
 
-        loading_label = ttk.Label(container, text=labels[3])
+        loading_label = ttk.Label(container, text=labels[11])
         loading_label.pack(pady=20)
 
-        prev_btn.config(state="disabled")
-        next_btn.config(state="disabled")
+        previous_button.config(state="disabled")
+        next_button.config(state="disabled")
 
         def worker():
             try:
@@ -367,11 +435,11 @@ def mod_store(parent, version="26.1.2", language="english"):
                         text=f"{page + 1} / {total_pages}"
                     )
 
-                    prev_btn.config(
+                    previous_button.config(
                         state="normal" if page > 0 else "disabled"
                     )
 
-                    next_btn.config(
+                    next_button.config(
                         state=(
                             "normal"
                             if (page + 1) * limit < total_hits
@@ -387,7 +455,7 @@ def mod_store(parent, version="26.1.2", language="english"):
 
                     ttk.Label(
                         container,
-                        text=labels[9]
+                        text=labels[12]
                     ).pack(pady=20)
 
                 win.after(0, show_error)
@@ -396,6 +464,25 @@ def mod_store(parent, version="26.1.2", language="english"):
             target=worker,
             daemon=True
         ).start()
+
+    def refresh():
+        page_cache.clear()
+        load_page()
+
+    def search():
+        nonlocal page
+
+        page = 0
+        page_cache.clear()
+        load_page()
+
+    def on_search_changed(*args):
+        nonlocal search_after_id
+
+        if search_after_id is not None:
+            win.after_cancel(search_after_id)
+
+        search_after_id = win.after(300, search)
 
     def next_page():
         nonlocal page
@@ -410,28 +497,34 @@ def mod_store(parent, version="26.1.2", language="english"):
             page -= 1
             load_page()
 
-    prev_btn = ttk.Button(
-        navigation_toolbar,
-        text="\uE00E",
-        command=prev_page,
-        style="ToolbarButton.TButton"
-    )
+    search_var.trace_add("write", on_search_changed)
 
-    prev_btn.pack(side="left")
+    search_entry = ttk.Entry(search_toolbar, textvariable=search_var, width=50)
+    search_entry.pack(ipady=3)
+
+    previous_button = ttk.Button(navigation_toolbar, text="\uE00E", command=prev_page, style="ToolbarButton.TButton")
+    previous_button.grid(row=0, column=0)
 
     page_label = ttk.Label(navigation_toolbar, text="")
-    page_label.pack(side="left", padx=10)
+    page_label.grid(row=0, column=1, padx=10)
 
-    next_btn = ttk.Button(
-        navigation_toolbar,
-        text="\uE00F",
-        command=next_page,
-        style="ToolbarButton.TButton"
-    )
+    next_button = ttk.Button(navigation_toolbar, text="\uE00F", command=next_page, style="ToolbarButton.TButton")
+    next_button.grid(row=0, column=2)
 
-    next_btn.pack(side="left")
+    refresh_button = ttk.Button(other_toolbar, text="\uE149", style="ToolbarButton.TButton", command=refresh)
+    refresh_button.grid(row=0, column=0)
 
-    ToolTip(prev_btn, tooltip_labels[6])
-    ToolTip(next_btn, tooltip_labels[7])
+    import_button = ttk.Button(other_toolbar, text="\uE109", style="ToolbarButton.TButton", command=import_mod)
+    import_button.grid(row=0, column=1)
+
+    open_dir_button = ttk.Button(other_toolbar, text="\uE19C", style="ToolbarButton.TButton", command=open_dir)
+    open_dir_button.grid(row=0, column=2)
+
+    if tooltips:
+        ToolTip(open_dir_button, tooltip_labels[6])
+        ToolTip(import_button, tooltip_labels[7])
+        ToolTip(previous_button, tooltip_labels[4])
+        ToolTip(next_button, tooltip_labels[5])
+        ToolTip(refresh_button, tooltip_labels[9])
 
     load_page()

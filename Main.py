@@ -23,17 +23,13 @@ except Exception:
         pass
 
 configuration_file = "Configuration.json"
-threshold_version = "1.16.5"
 mc_dir = minecraft_launcher_lib.utils.get_minecraft_directory()
-mod_dir = os.path.join(mc_dir, "mods")
 process = None
 data_directory = os.path.join(os.path.dirname(__file__), "Data")
 tooltip_labels = {}
 menu_labels = {}
 labels = {}
 dialogs = {}
-tabs = {}
-
 
 if hasattr(sys, "_MEIPASS"):
     icon_path = os.path.join(sys._MEIPASS, "Icon.ico")
@@ -66,8 +62,9 @@ if os.path.exists(configuration_file):
         for key, value in default_configuration.items():
             configuration.setdefault(key, value)
 
-        if configuration["fabric"] is None:
-            configuration["fabric"] = "None"
+        configuration.setdefault("loader", "Vanilla")
+        configuration.setdefault("loader_version", None)
+
     except json.JSONDecodeError:
         messagebox.showwarning("Warning", "The configuration file is corrupt. Therefore, the settings have been reset.")
         configuration = default_configuration.copy()
@@ -102,27 +99,9 @@ def is_connected(timeout=3):
             pass
 
     return False
-    
-if is_connected():
-    if configuration["snapshots"]:
-        mc_versions = [
-            v["id"]
-            for v in minecraft_launcher_lib.utils.get_version_list()
-            if v["type"] in ["release", "snapshot", "old_beta", "old_alpha"]
-        ]
-    else:
-        mc_versions = [
-            v["id"]
-            for v in minecraft_launcher_lib.utils.get_version_list()
-            if v["type"] == "release"
-        ]
-else:
-    mc_versions = [
-        v["id"]
-        for v in minecraft_launcher_lib.utils.get_installed_versions(mc_dir)
-    ]
-    
-versions = mc_versions.copy()
+
+online = is_connected()
+versions = []
 
 installed_versions = minecraft_launcher_lib.utils.get_installed_versions(mc_dir)
 
@@ -137,33 +116,18 @@ for v in installed_versions:
     
 java_path = configuration["java_path"]
 
-def version_tuple(v):
-    return tuple(map(int, v.split(".")))
-
-def is_vanilla_installed(mc_version: str) -> bool:
-    installed = minecraft_launcher_lib.utils.get_installed_versions(
-        minecraft_launcher_lib.utils.get_minecraft_directory()
-    )
-
-    return any(
-        v["id"] == mc_version and v["type"] == "release"
-        for v in installed
-    )
-    
 def open_dir():
-    global mc_dir
     if not os.path.exists(mc_dir):
         os.makedirs(mc_dir, exist_ok=True)
 
     if sys.platform == "win32":
-        os.startfile(os.path.join(mc_dir))
+        os.startfile(mc_dir)
     elif sys.platform == "darwin":
-        os.system(f'open "{os.path.join(mc_dir)}"')
+        os.system(f'open "{mc_dir}"')
     else:
-        os.system(f'xdg-open "{os.path.join(mc_dir)}"')
+        os.system(f'xdg-open "{mc_dir}"')
         
 def select_java():
-    global dialogs
     path = filedialog.askopenfilename(
         title=dialogs["java"][0],
         filetypes=[(dialogs["java"][1], "java.exe javaw.exe")])
@@ -188,23 +152,29 @@ def show_progress(text):
 
     win.after(0, update)
 
-def install_fabric(mc_version, loader):
+def install_loader(loader, mc_version, loader_version):
     try:
-        minecraft_launcher_lib.fabric.install_fabric(
-            minecraft_version=mc_version,
-            loader_version=loader,
-            minecraft_directory=mc_dir
+        mod_loader = minecraft_launcher_lib.mod_loader.get_mod_loader(
+            loader.lower()
         )
+
+        mod_loader.install(
+            minecraft_version=mc_version,
+            minecraft_directory=mc_dir,
+            loader_version=loader_version,
+            callback={"setStatus": set_status},
+            java=java_path
+        )
+
+        return True
+
     except Exception:
         error_handler(*sys.exc_info(), language=language.get())
         win.after(0, lambda: start_button.config(state="normal"))
         return False
 
-    return True
-
 def hide_progress():
     win.after(0, progress_label.pack_forget)
-
 
 def set_status(text):
     def update():
@@ -222,7 +192,7 @@ def set_status(text):
     win.after(0, update)
 
 def launch_game():
-    global process, mc_dir, dialogs
+    global process
 
     try:
 
@@ -259,48 +229,6 @@ def launch_game():
 
         username = username_entry.get()
         version = version_combobox.get()
-        loader = fabric_combobox.get()
-
-        if loader != "None":
-            mc_version = version
-            version_id = f"fabric-loader-{loader}-{mc_version}"
-
-            installed = {
-                v["id"]
-                for v in minecraft_launcher_lib.utils.get_installed_versions(mc_dir)
-            }
-
-            if version_id not in installed:
-                if is_connected():
-                    win.after(
-                        0,
-                        lambda: start_button.config(state="disabled")
-                    )
-
-                    show_progress(tooltip_labels[4])
-
-                    ok = install_fabric(
-                        mc_version,
-                        loader
-                    )
-
-                    if not ok:
-                        hide_progress()
-                        return
-
-                else:
-                    win.after(
-                        0,
-                        lambda: messagebox.showerror(
-                            dialogs["ver_err"][0],
-                            dialogs["ver_err"][1]
-                        )
-                    )
-
-                    hide_progress()
-                    return
-
-            version = version_id
 
         if not username:
             win.after(0, lambda: messagebox.showerror(
@@ -320,19 +248,32 @@ def launch_game():
             hide_progress()
             return
 
+        loader = loader_combobox.get()
+        loader_version = loader_version_combobox.get()
+
+        if loader != "Vanilla":
+            mod_loader = minecraft_launcher_lib.mod_loader.get_mod_loader(
+                loader.lower()
+            )
+
+            version_id = mod_loader.get_installed_version(
+                version,
+                loader_version
+            )
+        else:
+            version_id = version
+            loader = None
+            loader_version = None
+
         installed_versions = {
             v["id"]
             for v in minecraft_launcher_lib.utils.get_installed_versions(mc_dir)
         }
 
         if version not in installed_versions:
-            if is_connected():
-                win.after(
-                    0,
-                    lambda: start_button.config(state="disabled")
-                )
-
-                show_progress(tooltip_labels[5])
+            if online:
+                win.after(0, lambda: start_button.config(state="disabled"))
+                show_progress(labels[4])
 
                 callback = {
                     "setStatus": set_status
@@ -343,7 +284,6 @@ def launch_game():
                     mc_dir,
                     callback=callback
                 )
-
             else:
                 win.after(
                     0,
@@ -352,9 +292,40 @@ def launch_game():
                         dialogs["ver_err"][1]
                     )
                 )
-
                 hide_progress()
                 return
+
+        installed_versions = {
+            v["id"]
+            for v in minecraft_launcher_lib.utils.get_installed_versions(mc_dir)
+        }
+
+        if loader is not None and version_id not in installed_versions:
+            if online:
+                win.after(0, lambda: start_button.config(state="disabled"))
+                show_progress(labels[4])
+
+                ok = install_loader(
+                    loader,
+                    version,
+                    loader_version
+                )
+
+                if not ok:
+                    hide_progress()
+                    return
+            else:
+                win.after(
+                    0,
+                    lambda: messagebox.showerror(
+                        dialogs["ver_err"][0],
+                        dialogs["ver_err"][1]
+                    )
+                )
+                hide_progress()
+                return
+
+        version = version_id
 
         options = {
             "username": username,
@@ -430,21 +401,23 @@ def launch_game():
 def save_settings():
     username = username_entry.get()
     version = version_combobox.get()
-    fabric = fabric_combobox.get()
+    loader = loader_combobox.get()
+    loader_version = loader_version_combobox.get()
     snapshots = show_snapshots.get()
     hide = hide_when_start.get()
     lang = language.get()
     tlp = tooltips.get()
     jvmargs = jvm_arguments
-    
-    if fabric == "None":
-        fabric = None
+
+    if loader == "Vanilla":
+        loader_version = ""
     
     config = {
         "username": username,
         "version": version,
         "java_path": java_path,
-        "fabric": fabric,
+        "loader": loader,
+        "loader_version": loader_version,
         "snapshots": snapshots,
         "hide_when_start": hide,
         "language": lang,
@@ -461,29 +434,130 @@ def save_on_exit():
     
 def show_about():
     about(win, language=language.get())
+
+def update_loader_versions():
+    try:
+        loader = loader_combobox.get().strip()
+
+        if loader in ("", "Vanilla"):
+            win.after(
+                0,
+                lambda: (
+                    loader_version_combobox.configure(
+                        values=[],
+                        state="disabled"
+                    ),
+                    loader_version_combobox.set("")
+                )
+            )
+            return
+
+        mod_loader = minecraft_launcher_lib.mod_loader.get_mod_loader(
+            loader.lower()
+        )
+
+        values = mod_loader.get_loader_versions(
+            version_combobox.get(),
+            True
+        )
+
+        def finish():
+            current = loader_version_combobox.get()
+
+            loader_version_combobox.configure(
+                values=values,
+                state="readonly"
+            )
+
+            if current in values:
+                loader_version_combobox.set(current)
+            elif configuration.get("loader_version") in values:
+                loader_version_combobox.set(configuration["loader_version"])
+            elif values:
+                loader_version_combobox.current(0)
+            else:
+                loader_version_combobox.set("")
+
+        win.after(0, finish)
+
+    except Exception:
+        win.after(
+            0,
+            lambda: (
+                loader_version_combobox.configure(
+                    values=[],
+                    state="disabled"
+                ),
+                loader_version_combobox.set("")
+            )
+        )
+
+def update_supported_versions():
+    global mc_versions
+
+    try:
+        loader = loader_combobox.get().strip()
+
+        if loader in ("", "Vanilla"):
+            supported = mc_versions
+        else:
+            mod_loader = minecraft_launcher_lib.mod_loader.get_mod_loader(
+                loader.lower()
+            )
+            supported = mod_loader.get_minecraft_versions(
+                stable_only=not show_snapshots.get()
+            )
+
+        def finish():
+            current = version_combobox.get()
+
+            version_combobox.configure(
+                values=supported,
+                state="readonly"
+            )
+
+            if current in supported:
+                version_combobox.set(current)
+            elif configuration.get("version") in supported:
+                version_combobox.set(configuration["version"])
+            elif supported:
+                version_combobox.current(0)
+            else:
+                version_combobox.set("")
+
+        win.after(0, finish)
+
+    except Exception:
+        error_handler(*sys.exc_info(), language=language.get())
     
 def update_settings(*args):
-    global mc_versions, tooltip_labels, tooltip_dict, menu_dict, menu_labels, labels, label_dict, dialogs, dialog_dict, shortcut_command, java_path, mc_dir
-
-    fabric_loaders = ["None"]
+    global mc_versions
+    global tooltip_labels, menu_labels, labels, dialogs
 
     try:
         tooltip_labels = tooltip_dict[language.get()]
         menu_labels = menu_dict[language.get()]
         labels = label_dict[language.get()]
         dialogs = dialog_dict[language.get()]
-    except:
+    except KeyError:
         tooltip_labels = tooltip_dict["english"]
         menu_labels = menu_dict["english"]
         labels = label_dict["english"]
         dialogs = dialog_dict["english"]
-    
-    if is_connected():
+
+    online = is_connected()
+
+    if online:
         if show_snapshots.get():
             mc_versions = [
                 v["id"]
                 for v in minecraft_launcher_lib.utils.get_version_list()
-                if v["type"] in ["release", "snapshot", "old_beta", "old_alpha"]
+                if v["type"] in (
+                    "release",
+                    "snapshot",
+                    "old_beta",
+                    "old_alpha"
+                )
             ]
         else:
             mc_versions = [
@@ -491,69 +565,48 @@ def update_settings(*args):
                 for v in minecraft_launcher_lib.utils.get_version_list()
                 if v["type"] == "release"
             ]
-        fabric_combobox.config(state="readonly")
-        try:
-            fabric_loaders = ["None"]
 
-            fabric_loaders_raw = minecraft_launcher_lib.fabric.get_all_loader_versions()
-
-            if isinstance(fabric_loaders_raw, tuple):
-                fabric_loaders_raw = fabric_loaders_raw[0]
-
-            fabric_loaders += [
-                v["version"]
-                for v in fabric_loaders_raw
-            ]
-
-            fabric_combobox.config(
-                values=fabric_loaders,
-                state="readonly"
-            )
-
-            current_fabric = configuration.get("fabric")
-
-            if current_fabric in fabric_loaders:
-                fabric_combobox.set(current_fabric)
-            else:
-                fabric_combobox.set("None")
-
-        except Exception:
-            fabric_combobox.config(
-                values=["None"],
-                state="disabled"
-            )
-            fabric_combobox.set("None")
-
-    else:
-        fabric_combobox.config(
-            values=["None"],
-            state="disabled"
+        loader_combobox.configure(
+            state="readonly",
+            values=["Vanilla", "Fabric", "Forge", "NeoForge", "Quilt"]
         )
-        fabric_combobox.set("None")
 
-    if configuration["fabric"] in fabric_loaders:
-        fabric_combobox.set(configuration["fabric"])
     else:
-        fabric_combobox.set("None")
-        
-    version_combobox.config(values=mc_versions)
-        
+
+        mc_versions = [
+            v["id"]
+            for v in minecraft_launcher_lib.utils.get_installed_versions(mc_dir)
+            if not v["id"].startswith("fabric-loader-")
+        ]
+
+        loader_combobox.configure(
+            state="disabled",
+            values=[]
+        )
+
+    update_supported_versions()
+    update_loader_versions()
+
     username_label.config(text=labels[0])
     version_label.config(text=labels[1])
-    fabric_label.config(text=labels[2])
-        
+    loader_label.config(text=labels[2])
+    loader_version_label.config(text=labels[3])
+
     settings_menu.entryconfig(0, label=menu_labels[0])
     settings_menu.entryconfig(1, label=menu_labels[1])
     settings_menu.entryconfig(2, label=menu_labels[2])
-    settings_menu.entryconfig(3, label=menu_labels[3] if java_path else menu_labels[4])
+    settings_menu.entryconfig(
+        3,
+        label=menu_labels[3] if java_path else menu_labels[4]
+    )
     settings_menu.entryconfig(4, label=menu_labels[5])
     settings_menu.entryconfig(5, label=menu_labels[6])
-    
+
     ToolTip(start_button, tooltip_labels[0], shown=tooltips.get())
     ToolTip(dir_button, tooltip_labels[1], shown=tooltips.get())
     ToolTip(settings_button, tooltip_labels[2], shown=tooltips.get())
     ToolTip(about_button, tooltip_labels[3], shown=tooltips.get())
-    ToolTip(store_button, tooltip_labels[10], shown=tooltips.get())
+    ToolTip(store_button, tooltip_labels[8], shown=tooltips.get())
 
     save_settings()
 
@@ -617,15 +670,23 @@ version_label.grid(row=1, column=0, padx=(0, 5))
  
 version_combobox = ttk.Combobox(main_frame, values=versions, state="readonly", width=20, takefocus=0)
 version_combobox.grid(row=1, column=1, sticky="ew")
-version_combobox.bind("<<ComboboxSelected>>", lambda e: save_settings())
+version_combobox.bind("<<ComboboxSelected>>", lambda e: update_settings())
 
-fabric_label = ttk.Label(main_frame, text="")
-fabric_label.grid(row=2, column=0, padx=(0, 5), pady=(5, 0))
+loader_label = ttk.Label(main_frame, text="")
+loader_label.grid(row=2, column=0, padx=(0, 5), pady=(5, 0))
 
-fabric_combobox = ttk.Combobox(main_frame, state="readonly", width=20, takefocus=0, values=["None"])
-fabric_combobox.grid(row=2, column=1, sticky="ew", pady=(5, 0))
-    
-fabric_combobox.bind("<<ComboboxSelected>>", lambda e: save_settings())
+loader_combobox = ttk.Combobox(main_frame, state="readonly", width=20, takefocus=0, values=["Vanilla", "Fabric", "Forge", "NeoForge", "Quilt"])
+loader_combobox.grid(row=2, column=1, sticky="ew", pady=(5, 0))
+loader_combobox.bind("<<ComboboxSelected>>", lambda e: update_settings())
+loader_combobox.set(configuration["loader"])
+
+loader_version_label = ttk.Label(main_frame, text="")
+loader_version_label.grid(row=3, column=0, padx=(0, 5), pady=(5, 0))
+
+loader_version_combobox = ttk.Combobox(main_frame, state="readonly", width=20, takefocus=0, values=[])
+loader_version_combobox.grid(row=3, column=1, sticky="ew", pady=(5, 0))
+loader_version_combobox.bind("<<ComboboxSelected>>", lambda e: update_settings())
+loader_version_combobox.set(configuration["loader_version"])
 
 toolbar_frame = ttk.Frame(win)
 toolbar_frame.pack(fill="x")
@@ -642,7 +703,7 @@ start_button.grid(row=0, column=0)
 dir_button = ttk.Button(opt_toolbar, text="\uE19C", command=open_dir, style="ToolbarButton.TButton")
 dir_button.grid(row=0, column=1)
 
-store_button = ttk.Button(opt_toolbar, text="\uE74C", command=lambda: mod_store(win, language=language.get(), version=version_combobox.get()), style="ToolbarButton.TButton")
+store_button = ttk.Button(opt_toolbar, text="\uE74C", command=lambda: mod_store(win, language=language.get(), version=version_combobox.get(), loader=loader_combobox.get().lower(), tooltips=tooltips.get()), style="ToolbarButton.TButton")
 store_button.grid(row=0, column=2)
 
 settings_button = ttk.Button(opt_toolbar, text="\uE115", style="ToolbarButton.TButton")
@@ -657,21 +718,6 @@ progress_label = tk.Label(win, text="")
 username_entry.insert(0, configuration["username"])
 version_combobox.set(configuration["version"])
 
-def is_snapshot(version):
-    return any(c.isalpha() for c in version)
-
-def select_warning(event):
-    selected = version_combobox.get()
-
-    if is_snapshot(selected):
-        messagebox.showwarning(dialogs["snp_warn"][0], dialogs["snp_warn"][1])
-        return
-
-    if version_tuple(selected) < version_tuple(threshold_version):
-        messagebox.showwarning(dialogs["old_warn"][0], dialogs["old_warn"][1])
-        
-version_combobox.bind("<<ComboboxSelected>>", select_warning, add="+")
-    
 settings_menu = tk.Menu(win, tearoff=0, activebackground="#0040bf", activeforeground="#ffffff")
 settings_menu.add_checkbutton(label="", onvalue=True, offvalue=False, variable=show_snapshots, command=update_settings)
 settings_menu.add_checkbutton(label="", onvalue=True, offvalue=False, variable=hide_when_start, command=update_settings)
@@ -691,7 +737,7 @@ settings_menu.add_cascade(menu=lang_menu, label="")
 
 update_settings()
 
-if not is_connected():
+if not online:
     messagebox.showwarning(dialogs["intr"][0], dialogs["intr"][1])
 
 win.protocol("WM_DELETE_WINDOW", save_on_exit)

@@ -4,77 +4,71 @@
         "Minecraft klasörünü aç",
         "Ayarlar",
         "Hakkında",
-        "Fabric indiriliyor...",
-        "Minecraft indiriliyor...",
         "Önceki sayfa",
         "Sonraki sayfa",
         "Mod klasörünü aç",
         "Mod içe aktar",
-        "Mod mağazası"
+        "Mod mağazası",
+        "Yenile"
     ],
     "english": [
         "Launch",
         "Open Minecraft folder",
         "Settings",
         "About",
-        "Downloading Fabric...",
-        "Downloading Minecraft...",
         "Previous page",
         "Next page",
         "Open mods folder",
         "Import mod",
-        "Mod Store"
+        "Mod Store",
+        "Refresh"
     ],
     "german": [
         "Start",
         "Minecraft-Ordner öffnen",
         "Einstellungen",
         "Über",
-        "Fabric wird heruntergeladen...",
-        "Minecraft wird heruntergeladen...",
         "Vorherige Seite",
         "Nächste Seite",
         "Mods-Ordner öffnen",
         "Mod importieren",
-        "Mod-Shop"
+        "Mod-Shop",
+        "Aktualisieren"
     ],
     "russian": [
         "Запустить",
         "Открыть папку Minecraft",
         "Настройки",
         "О программе",
-        "Загрузка Fabric...",
-        "Загрузка Minecraft...",
         "Предыдущая страница",
         "Следующая страница",
         "Открыть папку модов",
         "Импортировать мод",
-        "Магазин модов"
+        "Магазин модов",
+        "Обновить"
     ],
     "spanish": [
         "Iniciar",
         "Abrir carpeta de Minecraft",
         "Configuración",
         "Acerca de",
-        "Descargando Fabric...",
-        "Descargando Minecraft...",
         "Página anterior",
         "Página siguiente",
         "Abrir carpeta de mods",
         "Importar mod",
-        "Tienda de Mods"
+        "Tienda de Mods",
+        "Actualizar"
     ],
     "french": [
         "Lancer",
         "Ouvrir le dossier Minecraft",
         "Paramètres",
         "À propos",
-        "Téléchargement de Fabric...",
-        "Téléchargement de Minecraft...",
         "Page précédente",
         "Page suivante",
         "Ouvrir le dossier des mods",
         "Importer un mod",
-        "Boutique de mods"
+        "Boutique de mods",
+        "Actualiser"
     ]
 }

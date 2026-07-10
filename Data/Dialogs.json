@@ -1,11 +1,9 @@
 {
     "turkish": {
-        "about": ["Hakkında", "BukiLauncher v1.3.5\n© telif hakkı 2026 Buğra US"],
+        "about": ["Hakkında", "BukiLauncher v1.4.0\n© telif hakkı 2026 Buğra US"],
         "non_java": ["Hata", "Java yürütülebilir dosyası seçilmedi. Java yürütülebilir dosyası olmadan Minecraft çalışamaz."],
         "non_name": ["Hata", "Lütfen bir kullanıcı adı girin."],
         "non_ver": ["Hata", "Lütfen bir sürüm seçin."],
-        "snp_warn": ["Uyarı", "Bu sürüm kararlı olmadığından bazı kaynak paketleri veya modlar çalışmayabilir."],
-        "old_warn": ["Uyarı", "Bu sürüm çok eski olduğu için seçtiğiniz Java yürütülebilir dosyası ile düzgün çalışmayabilir."],
         "mc_warn": ["Uyarı", "Minecraft zaten çalışıyor."],
         "java": ["Java Yürütülebilir Dosyası Seç", "Java Yürütülebilir Dosyası"],
         "intr": ["Uyarı", "İnternet bağlantısı yok. Bu nedenle sadece indirilmiş sürümleri oynayabilirsiniz."],
@@ -14,16 +12,13 @@
         "jvm_args": ["JVM Argümanlarını Düzenle", "JVM argümanlarını buradan düzenleyebilirsiniz. (Her satır başına bir argüman)"],
         "mod": ["Minecraft Modu Ekle", "Java Arşivi"],
         "store": "Mod Mağazası",
-        "mod_err": ["Hata", "Mod indirilemedi. İnternet bağlantısı yok."],
-        "str_err": ["Hata", "Mağaza açılamadı. İnternet bağlantısı yok."]
+        "mod_err": ["Hata", "Mod indirilemedi. İnternet bağlantısı yok."]
     },
     "english": {
-        "about": ["About", "BukiLauncher v1.3.5\n© copyright 2026 Buğra US"],
+        "about": ["About", "BukiLauncher v1.4.0\n© copyright 2026 Buğra US"],
         "non_java": ["Error", "Java executable not selected. Minecraft cannot run without a Java executable."],
         "non_name": ["Error", "Please enter a username."],
         "non_ver": ["Error", "Please select a version."],
-        "snp_warn": ["Warning", "This version is not stable, so some resource packs or mods may not work properly."],
-        "old_warn": ["Warning", "This version is very old and may not work properly with the selected Java executable."],
         "mc_warn": ["Warning", "Minecraft is already running."],
         "java": ["Select Java Executable", "Java Executable"],
         "intr": ["Warning", "No internet connection. Therefore, you can only play downloaded versions."],
@@ -32,16 +27,13 @@
         "jvm_args": ["Edit JVM Arguments", "You can edit JVM arguments here. (One argument per line)"],
         "mod": ["Add Minecraft Mod", "Java Archive"],
         "store": "Mod Store",
-        "mod_err": ["Error", "Mod could not be downloaded. No internet connection."],
-        "str_err": ["Error", "Store could not be opened. No internet connection."]
+        "mod_err": ["Error", "Mod could not be downloaded. No internet connection."]
     },
     "german": {
-        "about": ["Über", "BukiLauncher v1.3.5\n© Urheberrecht 2026 Buğra US"],
+        "about": ["Über", "BukiLauncher v1.4.0\n© Urheberrecht 2026 Buğra US"],
         "non_java": ["Fehler", "Java-Ausführungsdatei wurde nicht ausgewählt. Minecraft kann ohne Java nicht gestartet werden."],
         "non_name": ["Fehler", "Bitte geben Sie einen Benutzernamen ein."],
         "non_ver": ["Fehler", "Bitte wählen Sie eine Version aus."],
-        "snp_warn": ["Warnung", "Diese Version ist nicht stabil, daher funktionieren einige Ressourcenpakete oder Mods möglicherweise nicht richtig."],
-        "old_warn": ["Warnung", "Diese Version ist sehr alt und funktioniert möglicherweise nicht korrekt mit der ausgewählten Java-Version."],
         "mc_warn": ["Warnung", "Minecraft läuft bereits."],
         "java": ["Java-ausführbare Datei auswählen", "Java-ausführbare Datei"],
         "intr": ["Warnung", "Keine Internetverbindung. Daher können Sie nur heruntergeladene Versionen spielen."],
@@ -50,16 +42,13 @@
         "jvm_args": ["JVM-Argumente bearbeiten", "Hier können Sie JVM-Argumente bearbeiten. (Ein Argument pro Zeile)"],
         "mod": ["Minecraft-Mod hinzufügen", "Java-Archiv"],
         "store": "Mod-Store",
-        "mod_err": ["Fehler", "Mod konnte nicht heruntergeladen werden. Keine Internetverbindung."],
-        "str_err": ["Fehler", "Der Store konnte nicht geöffnet werden. Keine Internetverbindung."]
+        "mod_err": ["Fehler", "Mod konnte nicht heruntergeladen werden. Keine Internetverbindung."]
     },
     "russian": {
-        "about": ["О программе", "BukiLauncher v1.3.5\n© авторские права 2026 Buğra US"],
+        "about": ["О программе", "BukiLauncher v1.4.0\n© авторские права 2026 Buğra US"],
         "non_java": ["Ошибка", "Не выбран исполняемый файл Java. Minecraft не может работать без Java."],
         "non_name": ["Ошибка", "Пожалуйста, введите имя пользователя."],
         "non_ver": ["Ошибка", "Пожалуйста, выберите версию."],
-        "snp_warn": ["Предупреждение", "Эта версия нестабильна, поэтому некоторые ресурспаки или моды могут работать неправильно."],
-        "old_warn": ["Предупреждение", "Эта версия очень старая и может некорректно работать с выбранной версией Java."],
         "mc_warn": ["Предупреждение", "Minecraft уже запущен."],
         "java": ["Выбрать исполняемый файл Java", "Исполняемый файл Java"],
         "intr": ["Предупреждение", "Нет подключения к интернету. Поэтому вы можете играть только в загруженные версии."],
@@ -68,16 +57,13 @@
         "jvm_args": ["Редактировать аргументы JVM", "Здесь можно редактировать аргументы JVM. (Один аргумент на строку)"],
         "mod": ["Добавить мод Minecraft", "Java-архив"],
         "store": "Магазин модов",
-        "mod_err": ["Ошибка", "Не удалось скачать мод. Нет подключения к интернету."],
-        "str_err": ["Ошибка", "Не удалось открыть магазин. Нет подключения к интернету."]
+        "mod_err": ["Ошибка", "Не удалось скачать мод. Нет подключения к интернету."]
     },
     "spanish": {
-        "about": ["Acerca de", "BukiLauncher v1.3.5\n© copyright 2026 Buğra US"],
+        "about": ["Acerca de", "BukiLauncher v1.4.0\n© copyright 2026 Buğra US"],
         "non_java": ["Error", "No se ha seleccionado el ejecutable de Java. Minecraft no puede ejecutarse sin Java."],
         "non_name": ["Error", "Por favor, introduce un nombre de usuario."],
         "non_ver": ["Error", "Por favor, selecciona una versión."],
-        "snp_warn": ["Advertencia", "Esta versión no es estable, por lo que algunos paquetes de recursos o mods pueden no funcionar correctamente."],
-        "old_warn": ["Advertencia", "Esta versión es muy antigua y puede no funcionar correctamente con la versión de Java seleccionada."],
         "mc_warn": ["Advertencia", "Minecraft ya está en ejecución."],
         "java": ["Seleccionar ejecutable de Java", "Ejecutable de Java"],
         "intr": ["Advertencia", "No hay conexión a internet. Por lo tanto, solo puedes jugar versiones descargadas."],
@@ -86,16 +72,13 @@
         "jvm_args": ["Editar argumentos JVM", "Puedes editar los argumentos JVM aquí. (Un argumento por línea)"],
         "mod": ["Agregar mod de Minecraft", "Archivo Java"],
         "store": "Tienda de mods",
-        "mod_err": ["Error", "No se pudo descargar el mod. Sin conexión a internet."],
-        "str_err": ["Error", "No se pudo abrir la tienda. Sin conexión a internet."]
+        "mod_err": ["Error", "No se pudo descargar el mod. Sin conexión a internet."]
     },
     "french": {
-        "about": ["À propos", "BukiLauncher v1.3.5\n© droits d'auteur 2026 Buğra US"],
+        "about": ["À propos", "BukiLauncher v1.4.0\n© droits d'auteur 2026 Buğra US"],
         "non_java": ["Erreur", "L'exécutable Java n'est pas sélectionné. Minecraft ne peut pas fonctionner sans Java."],
         "non_name": ["Erreur", "Veuillez entrer un nom d'utilisateur."],
         "non_ver": ["Erreur", "Veuillez sélectionner une version."],
-        "snp_warn": ["Avertissement", "Cette version n'est pas stable, donc certains packs de ressources ou mods peuvent ne pas fonctionner correctement."],
-        "old_warn": ["Avertissement", "Cette version est très ancienne et peut ne pas fonctionner correctement avec la version Java sélectionnée."],
         "mc_warn": ["Avertissement", "Minecraft est déjà en cours d'exécution."],
         "java": ["Sélectionner l'exécutable Java", "Exécutable Java"],
         "intr": ["Avertissement", "Pas de connexion Internet. Vous pouvez donc uniquement jouer aux versions téléchargées."],
@@ -104,7 +87,6 @@
         "jvm_args": ["Modifier les arguments JVM", "Vous pouvez modifier les arguments JVM ici. (Un argument par ligne)"],
         "mod": ["Ajouter un mod Minecraft", "Archive Java"],
         "store": "Boutique de mods",
-        "mod_err": ["Erreur", "Impossible de télécharger le mod. Pas de connexion Internet."],
-        "str_err": ["Erreur", "Impossible d'ouvrir la boutique. Pas de connexion Internet."]
+        "mod_err": ["Erreur", "Impossible de télécharger le mod. Pas de connexion Internet."]
     }
 }
