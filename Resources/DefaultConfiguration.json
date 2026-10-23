@@ -1,0 +1,15 @@
+{
+    "username": "Player",
+    "version": "26.3",
+    "loader": "Vanilla",
+    "loader_version": "",
+    "show_snapshots": false,
+    "hide_when_launch": true,
+    "show_tooltips": true,
+    "java_path": null,
+    "minecraft_directory": null,
+    "jvm_args": [],
+    "uuid": "00000000-0000-0000-0000-000000000000",
+    "theme": "light",
+    "language": "EN"
+}

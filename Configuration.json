@@ -1,12 +1,15 @@
 {
     "username": "Player",
-    "version": "26.2",
+    "version": "26.3",
+    "loader": "Fabric",
+    "loader_version": "0.20.1",
+    "show_snapshots": false,
+    "hide_when_launch": true,
+    "show_tooltips": true,
     "java_path": null,
-    "loader": "Vanilla",
-    "loader_version": "",
-    "snapshots": false,
-    "hide_when_start": true,
-    "language": "english",
-    "show_tooltip": true,
-    "jvm_arguments": []
+    "minecraft_directory": "C:\\Users\\zeyne\\AppData\\Roaming\\.minecraft",
+    "jvm_args": [],
+    "uuid": "00000000-0000-0000-0000-000000000000",
+    "theme": "light",
+    "language": "EN"
 }

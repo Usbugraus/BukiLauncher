@@ -1,0 +1,12 @@
+{
+  "light": {
+    "label": "Settings.Theme.Light",
+    "file": "Light.json",
+    "value": "light"
+  },
+  "dark": {
+    "label": "Settings.Theme.Dark",
+    "file": "Dark.json",
+    "value": "dark"
+  }
+}

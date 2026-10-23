@@ -1,5 +1,6 @@
 from tkinter import messagebox
-import traceback, datetime, ctypes, sys
+import traceback, datetime, os
+import ctypes
 
 try:
     ctypes.windll.shcore.SetProcessDpiAwareness(1)
@@ -9,22 +10,17 @@ except Exception:
     except:
         pass
 
+current_time = datetime.datetime.now()
+error_log_file = os.path.join("ErrorLogs", f"ErrorLog {current_time.strftime('%d-%m-%Y')} {current_time.strftime('%H.%M.%S')}.txt")
+
 try:
     import Main
+except:
+    messagebox.showerror("Error", f"An error occured while starting BukiLauncher:\n{traceback.format_exc()}")
+    os.makedirs("ErrorLogs", exist_ok=True)
 
-except Exception:
-    messagebox.showerror(
-        "Error",
-        f"An error occured while starting BukiHTML:\n{traceback.format_exc()}"
-    )
     try:
-        with open("ErrorLog.txt", "a", encoding="utf-8") as f:
-            f.write(f"\nDate: {datetime.datetime.now()}\n\n{traceback.format_exc()}")
+        with open(error_log_file, "w", encoding="utf-8") as f:
+            f.write(traceback.format_exc())
     except:
-        messagebox.showerror(
-            "Error",
-            "Failed to log error"
-        )
-    finally:
-        sys.exit(1)
-
+        messagebox.showerror("Error", f"Failed to log error:\n{traceback.format_exc()}")

@@ -1,24 +1,16 @@
-import traceback, datetime
 from tkinter import messagebox
-import os, json
+import traceback, datetime, os
 
-data_directory = os.path.join(os.path.dirname(__file__), "Data")
+current_time = datetime.datetime.now()
+error_log_file = os.path.join("ErrorLogs", f"ErrorLog {current_time.strftime('%d-%m-%Y')} {current_time.strftime('%H.%M.%S')}.txt")
 
-with open(os.path.join(data_directory, "Dialogs.json"), "r", encoding="utf-8") as f:
-    dialog_dict = json.load(f)
+def error_handler(exctype, value, tb):
+    error = traceback.format_exception(exctype, value, tb)
+    error_text = "".join(error)
 
-def error_handler(exc_type, exc_value, exc_traceback, language="english"):
-
-    tb_text = ''.join(traceback.format_exception(exc_type, exc_value, exc_traceback))
-
+    messagebox.showerror("Error", f"An error occurred:\n\n{error_text}")
     try:
-        dialogs = dialog_dict[language]
+        with open(error_log_file, "a", encoding="utf-8") as f:
+            f.write(error_text)
     except:
-        dialogs = dialog_dict["english"]
-
-    title, subtitle = dialogs["error"]
-
-    messagebox.showerror(title, f"{subtitle}\n\n{tb_text}")
-
-    with open("ErrorLog.txt", "a", encoding="utf-8") as f:
-        f.write(f"\nDate: {datetime.datetime.now()}\n\n{tb_text}")
+        messagebox.showerror("Error", f"Failed to log error:\n{traceback.format_exc()}")

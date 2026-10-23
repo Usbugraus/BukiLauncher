@@ -1,0 +1,158 @@
+{
+  "window": {
+    "background": "#f0f0f0"
+  },
+  "frame": {
+    "flat": {
+      "background": "#f0f0f0",
+      "borderwidth": 1,
+      "relief": "flat"
+    },
+    "outset": {
+      "background": "#f0f0f0",
+      "borderwidth": 1,
+      "relief": "raised"
+    },
+    "inset": {
+      "background": "#f0f0f0",
+      "borderwidth": 1,
+      "relief": "sunken"
+    }
+  },
+  "labelframe": {
+    "label": {
+      "background": "#f0f0f0",
+      "foreground": "#000000"
+    },
+    "flat": {
+      "background": "#f0f0f0",
+      "borderwidth": 1,
+      "relief": "flat"
+    },
+    "outset": {
+      "background": "#f0f0f0",
+      "borderwidth": 1,
+      "relief": "raised"
+    },
+    "inset": {
+      "background": "#f0f0f0",
+      "borderwidth": 1,
+      "relief": "sunken"
+    }
+  },
+  "label": {
+    "background": "#f0f0f0",
+    "foreground": "#000000",
+    "relief": "flat",
+    "borderwidth": 0
+  },
+  "button": {
+    "background": "#f0f0f0",
+    "pressedbackground": "#ffff00",
+    "foreground": "#000000",
+    "pressedforeground": "#000000",
+    "relief": "raised",
+    "borderwidth": 1
+  },
+  "toolbarbutton": {
+    "normal": {
+      "background": "#f0f0f0",
+      "pressedbackground": "#ffff00",
+      "foreground": "#000000",
+      "pressedforeground": "#000000",
+      "disabledforeground": "#808080",
+      "relief": "flat",
+      "borderwidth": 1
+    },
+    "marked": {
+      "background": "#f0f0f0",
+      "pressedbackground": "#0040ff",
+      "foreground": "#0040ff",
+      "pressedforeground": "#ffffff",
+      "disabledforeground": "#6080bf",
+      "relief": "flat",
+      "borderwidth": 1
+    },
+    "dangerous": {
+      "background": "#f0f0f0",
+      "pressedbackground": "#ff0000",
+      "foreground": "#ff0000",
+      "pressedforeground": "#ffffff",
+      "disabledforeground": "#bf8080",
+      "relief": "flat",
+      "borderwidth": 1
+    }
+  },
+  "entry": {
+    "background": "#ffffff",
+    "foreground": "#000000",
+    "disabledbackground": "#f0f0f0",
+    "disabledforeground": "#808080",
+    "selectionbackground": "#0040ff",
+    "selectionforeground": "#ffffff",
+    "focuscolor": "#0040ff",
+    "focuswidth": 2,
+    "relief": "sunken",
+    "borderwidth": 1
+  },
+  "combobox": {
+    "background": "#ffffff",
+    "foreground": "#000000",
+    "disabledbackground": "#f0f0f0",
+    "disabledforeground": "#808080",
+    "selectionbackground": "#0040ff",
+    "selectionforeground": "#ffffff",
+    "focuscolor": "#0040ff",
+    "focuswidth": 2,
+    "relief": "sunken",
+    "borderwidth": 1,
+    "arrowcolor": "#000000",
+    "arrowbackground": "#f0f0f0",
+    "arrowsize": 14
+  },
+  "tooltip":{
+    "background": "#ffffbf",
+    "foreground": "#000000",
+    "relief": "raised",
+    "borderwidth": 1
+  },
+  "progressbar":{
+    "background": "#0040ff",
+    "progresscolor": "#f0f0f0",
+    "borderwidth": 1
+  },
+  "textfield": {
+    "background": "#ffffff",
+    "foreground": "#000000",
+    "relief": "sunken",
+    "borderwidth": 1
+  },
+  "menu": {
+    "background": "#f0f0f0",
+    "foreground": "#000000",
+    "selectionbackground": "#0040ff",
+    "selectionforeground": "#ffffff",
+    "javaselected": "#0040ff",
+    "javanotselected": "#ff0000",
+    "selectionbackground": "#0040ff",
+    "selectionforeground": "#ffffff"
+  },
+  "scrollbar": {
+    "background": "#f0f0f0",
+    "arrowcolor": "#000000",
+    "arrowsize": 14,
+    "borderwidth": 1,
+    "troughcolor": "#ffffff"
+  },
+  "tree": {
+    "titlebackground": "#f0f0f0",
+    "titleforeground": "#000000",
+    "background": "#ffffff",
+    "foreground": "#000000",
+    "selectionbackground": "#0040ff",
+    "selectionforeground": "#ffffff",
+    "focuscolor": "#0040ff",
+    "focuswidth": 2,
+    "borderwidth": 1
+  }
+}

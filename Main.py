@@ -1,18 +1,16 @@
 import tkinter as tk
-from tkinter import ttk, messagebox
-from tkinter import filedialog
-import minecraft_launcher_lib
-import subprocess, threading, json, os, sys
-import ctypes
-import requests
-from ToolTip import ToolTip
+from tkinter import ttk, filedialog, messagebox
+from Functions import is_connected, get_minecraft_versions, is_version_installed, launch_minecraft, update_widgets, open_minecraft_directory, set_theme
+from MCInstaller import install
+from Constants import icon_path, configuration_file, default_configuration_file, language_configuration_file, fonts_directory, theme_configuration_file
+from Tooltips import Tooltip
+from JVMArgsEdit import set_jvm_arguments
 from ErrorHandler import error_handler
-from JVMArgumentsEditor import edit_jvm_arguments
-from About import about
-from ModStore import mod_store
-
-myappid = 'com.usbugraus.bukilauncher'
-ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
+from About import show_about
+from UUIDEdit import set_uuid
+from CrashReport import crash_report
+from ModManager import mod_manager
+import os, json, sys, minecraft_launcher_lib, ctypes, threading
 
 try:
     ctypes.windll.shcore.SetProcessDpiAwareness(1)
@@ -22,38 +20,37 @@ except Exception:
     except:
         pass
 
-configuration_file = "Configuration.json"
-mc_dir = minecraft_launcher_lib.utils.get_minecraft_directory()
-process = None
-data_directory = os.path.join(os.path.dirname(__file__), "Data")
-tooltip_labels = {}
-menu_labels = {}
-labels = {}
-dialogs = {}
+sys.excepthook = error_handler
 
-if hasattr(sys, "_MEIPASS"):
-    icon_path = os.path.join(sys._MEIPASS, "Icon.ico")
+win = tk.Tk()
+win.title("BukiLauncher")
+win.resizable(False, False)
+
+if os.path.exists(icon_path):
+    icon = tk.PhotoImage(file=icon_path)
+    win.iconphoto(True, icon)
+
+if os.path.exists(default_configuration_file):
+    with open(default_configuration_file, "r", encoding="utf-8") as f:
+        default_configuration = json.load(f)
 else:
-    icon_path = os.path.join(os.path.dirname(__file__), "Icon.ico")
+    messagebox.showerror("Error", "The default configuration file not found.")
+    sys.exit()
 
-with open(os.path.join(data_directory, "ToolTipLabels.json"), "r", encoding="utf-8") as f:
-    tooltip_dict = json.load(f)
-    
-with open(os.path.join(data_directory, "MenuLabels.json"), "r", encoding="utf-8") as f:
-    menu_dict = json.load(f)
-    
-with open(os.path.join(data_directory, "Labels.json"), "r", encoding="utf-8") as f:
-    label_dict = json.load(f)
-    
-with open(os.path.join(data_directory, "Dialogs.json"), "r", encoding="utf-8") as f:
-    dialog_dict = json.load(f)
+if os.path.exists(language_configuration_file):
+    with open(language_configuration_file, "r", encoding="utf-8") as f:
+        language_configuration = json.load(f)
+else:
+    messagebox.showerror("Error", "The language configuration file not found.")
+    sys.exit()
 
-with open(os.path.join(data_directory, "DefaultConfiguration.json"), "r", encoding="utf-8") as f:
-    default_configuration = json.load(f)
-    
-if not os.path.exists(mc_dir):
-    os.makedirs(mc_dir, exist_ok=True)
-    
+if os.path.exists(theme_configuration_file):
+    with open(theme_configuration_file, "r", encoding="utf-8") as f:
+        theme_configuration = json.load(f)
+else:
+    messagebox.showerror("Error", "The theme configuration file not found.")
+    sys.exit()
+
 if os.path.exists(configuration_file):
     try:
         with open(configuration_file, "r", encoding="utf-8") as f:
@@ -62,683 +59,308 @@ if os.path.exists(configuration_file):
         for key, value in default_configuration.items():
             configuration.setdefault(key, value)
 
-        configuration.setdefault("loader", "Vanilla")
-        configuration.setdefault("loader_version", None)
-
     except json.JSONDecodeError:
         messagebox.showwarning("Warning", "The configuration file is corrupt. Therefore, the settings have been reset.")
         configuration = default_configuration.copy()
-
 else:
     messagebox.showwarning("Warning", "The configuration file has been moved to another location or deleted. Therefore, the settings have been reset.")
     configuration = default_configuration.copy()
-    
-def is_connected(timeout=3):
-    test_urls = [
-        "https://piston-meta.mojang.com",
-        "https://launchermeta.mojang.com",
-        "https://api.minecraftservices.com"
-    ]
 
-    headers = {
-        "User-Agent": "BukiLauncher"
-    }
+try:
+    language_file = os.path.join("Resources", "Languages", f"{configuration.get("language")}.json")
 
-    for url in test_urls:
-        try:
-            response = requests.get(
-                url,
-                timeout=timeout,
-                headers=headers
-            )
+    with open(language_file, "r", encoding="utf-8") as f:
+        language_data = json.load(f)
+except FileNotFoundError:
+    messagebox.showerror("Error", "The language data not found.")
+    sys.exit()
+except json.JSONDecodeError as e:
+    messagebox.showerror("Error", "The language data is corrupt.")
+    sys.exit()
 
-            if response.status_code < 500:
-                return True
+snapshots_variable = tk.BooleanVar(value=configuration.get("show_snapshots"))
+hide_when_launch_variable = tk.BooleanVar(value=configuration.get("hide_when_launch"))
+tooltips_variable = tk.BooleanVar(value=configuration.get("show_tooltips"))
+theme_variable = tk.StringVar(value=configuration.get("theme"))
+language_variable = tk.StringVar(value=configuration.get("language"))
 
-        except requests.RequestException:
-            pass
-
-    return False
-
-online = is_connected()
-versions = []
-
-installed_versions = minecraft_launcher_lib.utils.get_installed_versions(mc_dir)
-
-for v in installed_versions:
-    vid = v["id"]
-
-    if vid.startswith("fabric-loader-"):
-        continue
-
-    if vid not in versions:
-        versions.append(vid)
-    
-java_path = configuration["java_path"]
-
-def open_dir():
-    if not os.path.exists(mc_dir):
-        os.makedirs(mc_dir, exist_ok=True)
-
-    if sys.platform == "win32":
-        os.startfile(mc_dir)
-    elif sys.platform == "darwin":
-        os.system(f'open "{mc_dir}"')
+if configuration.get("java_path") is not None:
+    if os.path.exists(configuration.get("java_path")):
+        java = configuration.get("java_path")
     else:
-        os.system(f'xdg-open "{mc_dir}"')
-        
-def select_java():
-    path = filedialog.askopenfilename(
-        title=dialogs["java"][0],
-        filetypes=[(dialogs["java"][1], "java.exe javaw.exe")])
-    if path:
-        global java_path
-        java_path = path
-        update_settings()
-
-def launch():
-    threading.Thread(target=launch_game, daemon=True).start()
-
-def show_progress(text):
-    def update():
-        progress_label.config(text=text)
-
-        if not progress_label.winfo_ismapped():
-            progress_label.pack(
-                padx=20,
-                pady=(0, 20),
-                fill="x"
-            )
-
-    win.after(0, update)
-
-def install_loader(loader, mc_version, loader_version):
-    try:
-        mod_loader = minecraft_launcher_lib.mod_loader.get_mod_loader(
-            loader.lower()
-        )
-
-        mod_loader.install(
-            minecraft_version=mc_version,
-            minecraft_directory=mc_dir,
-            loader_version=loader_version,
-            callback={"setStatus": set_status},
-            java=java_path
-        )
-
-        return True
-
-    except Exception:
-        error_handler(*sys.exc_info(), language=language.get())
-        win.after(0, lambda: start_button.config(state="normal"))
-        return False
-
-def hide_progress():
-    win.after(0, progress_label.pack_forget)
-
-def set_status(text):
-    def update():
-        display_text = text if len(text) <= 30 else text[:30] + "..."
-
-        progress_label.config(text=display_text)
-
-        if not progress_label.winfo_ismapped():
-            progress_label.pack(
-                padx=20,
-                pady=(0, 20),
-                fill="x"
-            )
-
-    win.after(0, update)
-
-def launch_game():
-    global process
-
-    try:
-
-        if process and process.poll() is None:
-            win.after(0, lambda: messagebox.showwarning(
-                dialogs["mc_warn"][0],
-                dialogs["mc_warn"][1]
-            ))
-            hide_progress()
-            return
-
-        if not java_path:
-            win.after(0, lambda: messagebox.showerror(
-                dialogs["non_java"][0],
-                dialogs["non_java"][1]
-            ))
-            hide_progress()
-            return
-
-        if java_path == "rick":
-            import webbrowser
-
-            webbrowser.open(
-                "https://www.youtube.com/watch?v=dQw4w9WgXcQ"
-            )
-
-            hide_progress()
-
-            win.after(
-                0,
-                lambda: start_button.config(state="normal")
-            )
-            return
-
-        username = username_entry.get()
-        version = version_combobox.get()
-
-        if not username:
-            win.after(0, lambda: messagebox.showerror(
-                dialogs["non_name"][0],
-                dialogs["non_name"][1]
-            ))
-
-            hide_progress()
-            return
-
-        if not version:
-            win.after(0, lambda: messagebox.showerror(
-                dialogs["non_ver"][0],
-                dialogs["non_ver"][1]
-            ))
-
-            hide_progress()
-            return
-
-        loader = loader_combobox.get()
-        loader_version = loader_version_combobox.get()
-
-        if loader != "Vanilla":
-            mod_loader = minecraft_launcher_lib.mod_loader.get_mod_loader(
-                loader.lower()
-            )
-
-            version_id = mod_loader.get_installed_version(
-                version,
-                loader_version
-            )
-        else:
-            version_id = version
-            loader = None
-            loader_version = None
-
-        installed_versions = {
-            v["id"]
-            for v in minecraft_launcher_lib.utils.get_installed_versions(mc_dir)
-        }
-
-        if version not in installed_versions:
-            if online:
-                win.after(0, lambda: start_button.config(state="disabled"))
-                show_progress(labels[4])
-
-                callback = {
-                    "setStatus": set_status
-                }
-
-                minecraft_launcher_lib.install.install_minecraft_version(
-                    version,
-                    mc_dir,
-                    callback=callback
-                )
-            else:
-                win.after(
-                    0,
-                    lambda: messagebox.showerror(
-                        dialogs["ver_err"][0],
-                        dialogs["ver_err"][1]
-                    )
-                )
-                hide_progress()
-                return
-
-        installed_versions = {
-            v["id"]
-            for v in minecraft_launcher_lib.utils.get_installed_versions(mc_dir)
-        }
-
-        if loader is not None and version_id not in installed_versions:
-            if online:
-                win.after(0, lambda: start_button.config(state="disabled"))
-                show_progress(labels[4])
-
-                ok = install_loader(
-                    loader,
-                    version,
-                    loader_version
-                )
-
-                if not ok:
-                    hide_progress()
-                    return
-            else:
-                win.after(
-                    0,
-                    lambda: messagebox.showerror(
-                        dialogs["ver_err"][0],
-                        dialogs["ver_err"][1]
-                    )
-                )
-                hide_progress()
-                return
-
-        version = version_id
-
-        options = {
-            "username": username,
-            "uuid": "00000000000000000000000000000000",
-            "token": "",
-            "executablePath": java_path,
-            "jvmArguments": jvm_arguments
-        }
-
-        command = minecraft_launcher_lib.command.get_minecraft_command(
-            version,
-            mc_dir,
-            options
-        )
-
-        if isinstance(command, tuple):
-            command = command[0]
-
-        if isinstance(command, dict):
-            command = command.get("command", command)
-
-        if isinstance(command, str):
-            command = command.split()
-
-        win.after(0, lambda: (
-            win.withdraw()
-            if hide_when_start.get()
-            else hide_progress()
-        ))
-
-        process = subprocess.Popen(command)
-
-        def wait_game():
-            global process
-
-            try:
-                if process is None:
-                    return
-
-                process.wait()
-
-            except Exception:
-                error_handler(
-                    *sys.exc_info(),
-                    language=language.get()
-                )
-
-            finally:
-                win.after(0, lambda: (
-                    win.deiconify(),
-                    hide_progress(),
-                    start_button.config(state="normal")
-                ))
-
-        threading.Thread(
-            target=wait_game,
-            daemon=True
-        ).start()
-
-    except Exception:
-        error_handler(
-            *sys.exc_info(),
-            language=language.get()
-        )
-
-        hide_progress()
-
-        win.after(
-            0,
-            lambda: start_button.config(state="normal")
-        )
-    
-def save_settings():
-    username = username_entry.get()
-    version = version_combobox.get()
-    loader = loader_combobox.get()
-    loader_version = loader_version_combobox.get()
-    snapshots = show_snapshots.get()
-    hide = hide_when_start.get()
-    lang = language.get()
-    tlp = tooltips.get()
-    jvmargs = jvm_arguments
-
-    if loader == "Vanilla":
-        loader_version = ""
-    
-    config = {
-        "username": username,
-        "version": version,
-        "java_path": java_path,
-        "loader": loader,
-        "loader_version": loader_version,
-        "snapshots": snapshots,
-        "hide_when_start": hide,
-        "language": lang,
-        "show_tooltip": tlp,
-        "jvm_arguments": jvmargs,
-    }
-    
-    with open(configuration_file, "w", encoding="utf-8") as f:
-        json.dump(config, f, ensure_ascii=False, indent=4)
-        
-def save_on_exit():
-    save_settings()
-    win.destroy()
-    
-def show_about():
-    about(win, language=language.get())
-
-def update_loader_versions():
-    try:
-        loader = loader_combobox.get().strip()
-
-        if loader in ("", "Vanilla"):
-            win.after(
-                0,
-                lambda: (
-                    loader_version_combobox.configure(
-                        values=[],
-                        state="disabled"
-                    ),
-                    loader_version_combobox.set("")
-                )
-            )
-            return
-
-        mod_loader = minecraft_launcher_lib.mod_loader.get_mod_loader(
-            loader.lower()
-        )
-
-        values = mod_loader.get_loader_versions(
-            version_combobox.get(),
-            True
-        )
-
-        def finish():
-            current = loader_version_combobox.get()
-
-            loader_version_combobox.configure(
-                values=values,
-                state="readonly"
-            )
-
-            if current in values:
-                loader_version_combobox.set(current)
-            elif configuration.get("loader_version") in values:
-                loader_version_combobox.set(configuration["loader_version"])
-            elif values:
-                loader_version_combobox.current(0)
-            else:
-                loader_version_combobox.set("")
-
-        win.after(0, finish)
-
-    except Exception:
-        win.after(
-            0,
-            lambda: (
-                loader_version_combobox.configure(
-                    values=[],
-                    state="disabled"
-                ),
-                loader_version_combobox.set("")
-            )
-        )
-
-def update_supported_versions():
-    global mc_versions
-
-    try:
-        loader = loader_combobox.get().strip()
-
-        if loader in ("", "Vanilla"):
-            supported = mc_versions
-        else:
-            mod_loader = minecraft_launcher_lib.mod_loader.get_mod_loader(
-                loader.lower()
-            )
-            supported = mod_loader.get_minecraft_versions(
-                stable_only=not show_snapshots.get()
-            )
-
-        def finish():
-            current = version_combobox.get()
-
-            version_combobox.configure(
-                values=supported,
-                state="readonly"
-            )
-
-            if current in supported:
-                version_combobox.set(current)
-            elif configuration.get("version") in supported:
-                version_combobox.set(configuration["version"])
-            elif supported:
-                version_combobox.current(0)
-            else:
-                version_combobox.set("")
-
-        win.after(0, finish)
-
-    except Exception:
-        error_handler(*sys.exc_info(), language=language.get())
-    
-def update_settings(*args):
-    global mc_versions
-    global tooltip_labels, menu_labels, labels, dialogs
-
-    try:
-        tooltip_labels = tooltip_dict[language.get()]
-        menu_labels = menu_dict[language.get()]
-        labels = label_dict[language.get()]
-        dialogs = dialog_dict[language.get()]
-    except KeyError:
-        tooltip_labels = tooltip_dict["english"]
-        menu_labels = menu_dict["english"]
-        labels = label_dict["english"]
-        dialogs = dialog_dict["english"]
-
-    online = is_connected()
-
-    if online:
-        if show_snapshots.get():
-            mc_versions = [
-                v["id"]
-                for v in minecraft_launcher_lib.utils.get_version_list()
-                if v["type"] in (
-                    "release",
-                    "snapshot",
-                    "old_beta",
-                    "old_alpha"
-                )
-            ]
-        else:
-            mc_versions = [
-                v["id"]
-                for v in minecraft_launcher_lib.utils.get_version_list()
-                if v["type"] == "release"
-            ]
-
-        loader_combobox.configure(
-            state="readonly",
-            values=["Vanilla", "Fabric", "Forge", "NeoForge", "Quilt"]
-        )
-
+        java = None
+else:
+    java = None
+
+jvm_args = configuration.get("jvm_args")
+uuid = configuration.get("uuid")
+
+if configuration.get("minecraft_directory") is not None:
+    if os.path.exists(configuration.get("minecraft_directory")):
+        minecraft_directory = configuration.get("minecraft_directory")
     else:
-
-        mc_versions = [
-            v["id"]
-            for v in minecraft_launcher_lib.utils.get_installed_versions(mc_dir)
-            if not v["id"].startswith("fabric-loader-")
-        ]
-
-        loader_combobox.configure(
-            state="disabled",
-            values=[]
-        )
-
-    update_supported_versions()
-    update_loader_versions()
-
-    username_label.config(text=labels[0])
-    version_label.config(text=labels[1])
-    loader_label.config(text=labels[2])
-    loader_version_label.config(text=labels[3])
-
-    settings_menu.entryconfig(0, label=menu_labels[0])
-    settings_menu.entryconfig(1, label=menu_labels[1])
-    settings_menu.entryconfig(2, label=menu_labels[2])
-    settings_menu.entryconfig(
-        3,
-        label=menu_labels[3] if java_path else menu_labels[4]
-    )
-    settings_menu.entryconfig(4, label=menu_labels[5])
-    settings_menu.entryconfig(5, label=menu_labels[6])
-
-    ToolTip(start_button, tooltip_labels[0], shown=tooltips.get())
-    ToolTip(dir_button, tooltip_labels[1], shown=tooltips.get())
-    ToolTip(settings_button, tooltip_labels[2], shown=tooltips.get())
-    ToolTip(about_button, tooltip_labels[3], shown=tooltips.get())
-    ToolTip(store_button, tooltip_labels[8], shown=tooltips.get())
-
-    save_settings()
-
-def set_jvmargs():
-    global jvm_arguments
-    jvmargs = edit_jvm_arguments(win, language=language.get(), args=jvm_arguments)
-    jvm_arguments = jvmargs
-    update_settings()
-
-win = tk.Tk()
-win.title("BukiLauncher")
-win.resizable(False, False)
-
-sys.excepthook = lambda t, v, tb: error_handler(t, v, tb, language=language.get())
-win.report_callback_exception = lambda t, v, tb: error_handler(t, v, tb, language=language.get())
-
-show_snapshots = tk.BooleanVar(value=configuration["snapshots"])
-language = tk.StringVar(value=configuration["language"])
-tooltips = tk.BooleanVar(value=configuration["show_tooltip"])
-hide_when_start = tk.BooleanVar(value=configuration["hide_when_start"])
-jvm_arguments = configuration["jvm_arguments"]
-
-if os.path.exists(icon_path):
-    win.iconbitmap(icon_path)
+        minecraft_directory = minecraft_launcher_lib.utils.get_minecraft_directory()
+else:
+    minecraft_directory = minecraft_launcher_lib.utils.get_minecraft_directory()
 
 style = ttk.Style()
 style.theme_use("default")
 
-style.configure("TFrame", background="SystemButtonFace")
-style.configure("Out.TFrame", background="SystemButtonFace", borderwidth=1, relief=tk.RAISED)
-style.configure("In.TFrame", background="SystemButtonFace", borderwidth=1, relief=tk.SUNKEN)
+header_label = ttk.Label(win, text="BukiLauncher", font=("Segoe UI", 12, "bold"))
+header_label.pack(padx=20, pady=20)
 
-style.configure("TEntry", focuswidth=2, focuscolor="#0040bf", selectbackground="#0040bf")
+options_frame = ttk.Frame(win, style="Out.TFrame", padding=10)
+options_frame.pack(padx=20, pady=(0, 20))
 
-style.configure("TCombobox", focuswidth=2, focuscolor="#0040bf", arrowsize=14, selectbackground="#0040bf", background="SystemButtonFace")
-style.map("TCombobox", fieldbackground=[("readonly", "#ffffff"), ("disabled", "SystemButtonFace")], background=[("active", "SystemButtonFace"), ("pressed", "#ffff00")])
+username_label = ttk.Label(options_frame, text="")
+version_label = ttk.Label(options_frame, text="")
+loader_label = ttk.Label(options_frame, text="")
+loader_version_label = ttk.Label(options_frame, text="")
 
-style.map("TButton", background="SystemButtonFace")
-style.map("TButton", background=[("pressed", "#ffff00"), ("active", "SystemButtonFace")])
-style.configure("ToolbarButton.TButton", background="SystemButtonFace", relief=tk.FLAT, width=5, padding=(0, 5), font=("Segoe Fluent Icons", 10))
-style.map("ToolbarButton.TButton", background=[("pressed", "#ffff00"), ("active", "SystemButtonFace")], foreground=[("disabled", "#404040")])
-style.configure("MarkedToolbarButton.TButton", background="SystemButtonFace", foreground="#0040bf", relief=tk.FLAT, width=5, padding=(0, 5), font=("Segoe Fluent Icons", 10))
-style.map("MarkedToolbarButton.TButton", background=[("pressed", "#0040bf"), ("active", "SystemButtonFace")], foreground=[("pressed", "#ffffff"), ("active", "#0040bf"), ("disabled", "#bfbf00")])
-style.configure("DangerToolbarButton.TButton", background="SystemButtonFace", foreground="#bf0000", relief=tk.FLAT, width=5, padding=(0, 5), font=("Segoe Fluent Icons", 10))
-style.map("DangerToolbarButton.TButton", background=[("pressed", "#bf0000"), ("active", "SystemButtonFace")], foreground=[("pressed", "#ffffff"), ("active", "#bf0000"), ("disabled", ("#804040"))])
+username_entry = ttk.Entry(options_frame, width=25)
+version_combobox = ttk.Combobox(options_frame, width=20, style="TCombobox", values=[], state="readonly")
+loader_combobox = ttk.Combobox(options_frame, width=20, style="TCombobox", values=["Vanilla", "Fabric", "Forge", "NeoForge", "Quilt"], state="readonly")
+loader_version_combobox = ttk.Combobox(options_frame, width=20, style="TCombobox", values=[], state="readonly")
 
-ttk.Label(win, text="BukiLauncher", font=("Segoe UI", 12, "bold")).pack(padx=20, pady=(20, 0))
-
-main_frame = ttk.Frame(win, padding=10, style="Out.TFrame")
-main_frame.pack(padx=20, pady=20)
-
-username_label = ttk.Label(main_frame, text="")
-username_label.grid(row=0, column=0, padx=(0, 5), pady=(0, 5))
-
-username_entry = ttk.Entry(main_frame, width=25)
 username_entry.grid(row=0, column=1, pady=(0, 5))
-username_entry.bind("<KeyRelease>", lambda e: save_settings())
+username_label.grid(row=0, column=0, padx=(0, 5), pady=(0, 5))
+version_label.grid(row=1, column=0, padx=(0, 5), pady=(0, 5))
+version_combobox.grid(row=1, column=1, pady=(0, 5), sticky="ew")
+loader_label.grid(row=2, column=0, padx=(0, 5), pady=(0, 5))
+loader_combobox.grid(row=2, column=1, pady=(0, 5), sticky="ew")
+loader_version_label.grid(row=3, column=0, padx=(0, 5))
+loader_version_combobox.grid(row=3, column=1, sticky="ew")
 
-version_label = ttk.Label(main_frame, text="")
-version_label.grid(row=1, column=0, padx=(0, 5))
- 
-version_combobox = ttk.Combobox(main_frame, values=versions, state="readonly", width=20, takefocus=0)
-version_combobox.grid(row=1, column=1, sticky="ew")
-version_combobox.bind("<<ComboboxSelected>>", lambda e: update_settings())
+username_entry.insert(0, configuration.get("username"))
+version_combobox.set(configuration.get("version"))
+loader_combobox.set(configuration.get("loader"))
+loader_version_combobox.set(configuration.get("loader_version"))
 
-loader_label = ttk.Label(main_frame, text="")
-loader_label.grid(row=2, column=0, padx=(0, 5), pady=(5, 0))
+def select_java(parent=None):
+    global java
 
-loader_combobox = ttk.Combobox(main_frame, state="readonly", width=20, takefocus=0, values=["Vanilla", "Fabric", "Forge", "NeoForge", "Quilt"])
-loader_combobox.grid(row=2, column=1, sticky="ew", pady=(5, 0))
-loader_combobox.bind("<<ComboboxSelected>>", lambda e: update_settings())
-loader_combobox.set(configuration["loader"])
+    java_path = filedialog.askopenfilename(parent=parent, filetypes=[(language_data.get("SelectJava.Executable"), "java.exe javaw.exe")], title=language_data.get("SelectJava.Title"))
+    if java_path:
+        java = java_path
 
-loader_version_label = ttk.Label(main_frame, text="")
-loader_version_label.grid(row=3, column=0, padx=(0, 5), pady=(5, 0))
+    threading.Thread(target=update_settings, daemon=True).start()
 
-loader_version_combobox = ttk.Combobox(main_frame, state="readonly", width=20, takefocus=0, values=[])
-loader_version_combobox.grid(row=3, column=1, sticky="ew", pady=(5, 0))
-loader_version_combobox.bind("<<ComboboxSelected>>", lambda e: update_settings())
-loader_version_combobox.set(configuration["loader_version"])
+def select_minecraft_directory(parent=None):
+    global minecraft_directory
 
-toolbar_frame = ttk.Frame(win)
-toolbar_frame.pack(fill="x")
+    new_directory = filedialog.askdirectory(parent=parent, title=language_data.get("SelectMCDir.Title"))
+    if new_directory:
+        minecraft_directory = new_directory
 
-opt_toolbar = ttk.Frame(toolbar_frame, style="Out.TFrame", padding=5)
-opt_toolbar.pack(padx=20, pady=(0, 20), side="left")
+    threading.Thread(target=update_settings, daemon=True).start()
 
-about_toolbar = ttk.Frame(toolbar_frame, style="Out.TFrame", padding=5)
-about_toolbar.pack(padx=(0, 20), pady=(0, 20), side="right")
+def launch():
+    if java:
+        if not len(username_entry.get()) >= 3 and len(username_entry.get()) <= 16:
+            messagebox.showwarning(language_data.get("Messagebox.Title.Warning"), language_data.get("Messagebox.Content.UsernameWarning"))
+            return
 
-start_button = ttk.Button(opt_toolbar, text="\uE768", command=launch, style="MarkedToolbarButton.TButton")
-start_button.grid(row=0, column=0)
+        installed = is_version_installed(
+            version=version_combobox.get(),
+            mod_loader=loader_combobox.get().lower(),
+            loader_version=loader_version_combobox.get(),
+            minecraft_directory=minecraft_directory
+        )
 
-dir_button = ttk.Button(opt_toolbar, text="\uE19C", command=open_dir, style="ToolbarButton.TButton")
-dir_button.grid(row=0, column=1)
+        if installed:
+            out = launch_minecraft(
+                window=win,
+                username=username_entry.get(),
+                version=version_combobox.get(),
+                mod_loader=loader_combobox.get().lower(),
+                loader_version=loader_version_combobox.get(),
+                java_path=java,
+                hide_window=hide_when_launch_variable.get(),
+                jvm_arguments=jvm_args,
+                minecraft_directory=minecraft_directory
+            )
+            if out[2] != 0:
+                crash_report(win, language_data=language_data, stderr=out[1], theme=theme_variable.get())
+        else:
+            try:
+                install(
+                    parent=win,
+                    language_data=language_data,
+                    theme=theme_variable.get(),
+                    version=version_combobox.get(),
+                    mod_loader=loader_combobox.get().lower(),
+                    loader_version=loader_version_combobox.get(),
+                    java_path=java,
+                    minecraft_directory = minecraft_directory
+                )
+            except:
+                messagebox.showerror(language_data.get("Messagebox.Title.Error"), language_data.get("Messagebox.Content.InstallError"))
+    else:
+        messagebox.showerror(language_data.get("Messagebox.Title.Warning"), language_data.get("Messagebox.Content.NoJavaWarning"))
 
-store_button = ttk.Button(opt_toolbar, text="\uE74C", command=lambda: mod_store(win, language=language.get(), version=version_combobox.get(), loader=loader_combobox.get().lower(), tooltips=tooltips.get()), style="ToolbarButton.TButton")
-store_button.grid(row=0, column=2)
+def save_settings():
+    configuration = {
+        "username": username_entry.get(),
+        "version": version_combobox.get(),
+        "loader": loader_combobox.get(),
+        "loader_version": loader_version_combobox.get(),
+        "show_snapshots": snapshots_variable.get(),
+        "hide_when_launch": hide_when_launch_variable.get(),
+        "show_tooltips": tooltips_variable.get(),
+        "java_path": java,
+        "minecraft_directory": minecraft_directory,
+        "jvm_args": jvm_args,
+        "uuid": uuid,
+        "theme": theme_variable.get(),
+        "language": language_variable.get()
+    }
 
-settings_button = ttk.Button(opt_toolbar, text="\uE115", style="ToolbarButton.TButton")
+    with open(configuration_file, "w", encoding="utf-8") as f:
+        json.dump(configuration, f, indent=4)
+
+
+def update_settings(event=None):
+    global language_data
+
+    triggered_widget = event.widget if event else None
+
+    language_file = os.path.join("Resources", "Languages", language_configuration.get(language_variable.get()).get("file"))
+
+    with open(language_file, "r", encoding="utf-8") as f:
+        language_data = json.load(f)
+
+    set_theme(
+        theme=theme_variable.get(),
+        window=win,
+        style=style,
+        menus={
+            "settings": settings_menu,
+            "themes": theme_menu,
+            "languages": language_menu
+        },
+        java_selected=java
+    )
+
+    update_widgets(
+        widgets=[
+            username_label,
+            version_label,
+            loader_label,
+            loader_version_label
+        ],
+        tooltips=[
+            launch_tooltip,
+            open_dir_tooltip,
+            settings_tooltip,
+            mod_manager_tooltip
+        ],
+        menus={
+            "settings": settings_menu,
+            "themes": theme_menu
+        },
+        language_data=language_data,
+        java_selected=java,
+        theme=theme_variable.get()
+    )
+
+    versions = get_minecraft_versions(
+        mod_loader=loader_combobox.get().lower(),
+        version=version_combobox.get(),
+        snapshots=snapshots_variable.get(),
+        minecraft_directory=minecraft_directory
+    )
+
+    version_combobox.config(values=versions[0])
+    loader_version_combobox.config(values=versions[1])
+
+    if len(versions[0]) > 0 or len(versions[1]) > 0:
+        if version_combobox.get() not in versions[0]:
+            version_combobox.set(versions[0][0])
+
+        if triggered_widget == loader_combobox:
+            if loader_combobox.get().lower() != "vanilla" and versions[1]:
+                loader_version_combobox.set(versions[1][0])
+            else:
+                loader_version_combobox.set("")
+
+    if not is_connected():
+        loader_combobox.set("Vanilla")
+        loader_version_combobox.config(values=[])
+        loader_version_combobox.set("")
+
+    loader_combobox.config(state="readonly" if is_connected() else "disabled")
+    loader_version_combobox.config(state="readonly" if is_connected() else "disabled")
+
+    save_settings()
+
+def edit_jvm_args():
+    global jvm_args
+
+    new_arguments = set_jvm_arguments(win, language_data=language_data, jvm_args=jvm_args, theme=theme_variable.get())
+    jvm_args = new_arguments
+
+    threading.Thread(target=update_settings, daemon=True).start()
+
+def edit_uuid():
+    global uuid
+
+    new_uuid = set_uuid(win, language_data=language_data, uuid=uuid, theme=theme_variable.get())
+    uuid = new_uuid
+
+    threading.Thread(target=update_settings, daemon=True).start()
+
+toolbar = ttk.Frame(win, name="toolbar")
+toolbar.pack(padx=20, pady=(0, 20), fill="x")
+
+launch_button = ttk.Button(toolbar, text="\ue102", style="MarkedToolbarButton.TButton", command=launch, name="launch_button")
+launch_button.grid(row=0, column=0)
+launch_tooltip = Tooltip(launch_button, text="")
+
+open_dir_button = ttk.Button(toolbar, text="\ue197", style="ToolbarButton.TButton", command=lambda: open_minecraft_directory(minecraft_directory=minecraft_directory))
+open_dir_button.grid(row=0, column=1)
+open_dir_tooltip = Tooltip(open_dir_button, text="")
+
+mod_manager_button = ttk.Button(toolbar, text="\ue74c", style="ToolbarButton.TButton", command=lambda: threading.Thread(target=lambda: mod_manager(parent=win, version=version_combobox.get(), loader=loader_combobox.get(), theme=theme_variable.get(), language_data=language_data, minecraft_directory=minecraft_directory), daemon=True).start())
+mod_manager_button.grid(row=0, column=2)
+mod_manager_tooltip = Tooltip(mod_manager_button, text="")
+
+settings_button = ttk.Button(toolbar, text="\ue115", style="ToolbarButton.TButton")
 settings_button.grid(row=0, column=3)
 settings_button.bind('<ButtonRelease-1>', lambda event: settings_menu.tk_popup(event.x_root, event.y_root))
+settings_tooltip = Tooltip(settings_button, text="")
 
-about_button = ttk.Button(about_toolbar, text="\uE946", command=show_about, style="ToolbarButton.TButton")
-about_button.grid(row=0, column=0)
+username_entry.bind("<KeyRelease>", update_settings)
+version_combobox.bind("<<ComboboxSelected>>", update_settings)
+loader_combobox.bind("<<ComboboxSelected>>", update_settings)
+loader_version_combobox.bind("<<ComboboxSelected>>", update_settings)
 
-progress_label = tk.Label(win, text="")
+settings_menu = tk.Menu(win, tearoff=0)
+settings_menu.add_checkbutton(variable=snapshots_variable, command=update_settings)
+settings_menu.add_checkbutton(variable=hide_when_launch_variable, command=update_settings)
+settings_menu.add_checkbutton(variable=tooltips_variable, command=update_settings)
+settings_menu.add_command(command=select_java)
+settings_menu.add_command(command=select_minecraft_directory)
+settings_menu.add_command(command=edit_jvm_args)
+settings_menu.add_command(command=edit_uuid)
 
-username_entry.insert(0, configuration["username"])
-version_combobox.set(configuration["version"])
+theme_menu = tk.Menu(settings_menu, tearoff=0)
+for thm in theme_configuration:
+    thmconf = theme_configuration.get(thm)
+    theme_menu.add_radiobutton(value=thmconf.get("value"), variable=theme_variable, command=update_settings)
 
-settings_menu = tk.Menu(win, tearoff=0, activebackground="#0040bf", activeforeground="#ffffff")
-settings_menu.add_checkbutton(label="", onvalue=True, offvalue=False, variable=show_snapshots, command=update_settings)
-settings_menu.add_checkbutton(label="", onvalue=True, offvalue=False, variable=hide_when_start, command=update_settings)
-settings_menu.add_checkbutton(label="", onvalue=True, offvalue=False, variable=tooltips, command=update_settings)
-settings_menu.add_command(label="", command=select_java)
-settings_menu.add_command(label="", command=set_jvmargs)
+language_menu = tk.Menu(settings_menu, tearoff=0)
+for lang in language_configuration:
+    langconf = language_configuration.get(lang)
+    language_menu.add_radiobutton(label=langconf.get("label"), value=langconf.get("value"), variable=language_variable, command=update_settings)
 
-lang_menu = tk.Menu(settings_menu, tearoff=0, activebackground="#0040bf", activeforeground="#ffffff")
-lang_menu.add_radiobutton(label='Türkçe', variable=language, value="turkish", command=update_settings)
-lang_menu.add_radiobutton(label='English', variable=language, value="english", command=update_settings)
-lang_menu.add_radiobutton(label='Deutsch', variable=language, value="german", command=update_settings)
-lang_menu.add_radiobutton(label='Pусский', variable=language, value="russian", command=update_settings)
-lang_menu.add_radiobutton(label='Español', variable=language, value="spanish", command=update_settings)
-lang_menu.add_radiobutton(label='Français', variable=language, value="french", command=update_settings)
+settings_menu.add_cascade(menu=theme_menu)
+settings_menu.add_cascade(menu=language_menu)
+settings_menu.add_separator()
+settings_menu.add_command(command=lambda:show_about(win, language_data=language_data, theme=theme_variable.get()))
 
-settings_menu.add_cascade(menu=lang_menu, label="")
+threading.Thread(target=update_settings, daemon=True).start()
 
-update_settings()
+if not is_connected():
+    messagebox.showwarning(language_data.get("Messagebox.Title.Warning"), language_data.get("Messagebox.Content.NetworkWarning"))
 
-if not online:
-    messagebox.showwarning(dialogs["intr"][0], dialogs["intr"][1])
-
-win.protocol("WM_DELETE_WINDOW", save_on_exit)
 win.mainloop()

@@ -1,0 +1,37 @@
+{
+  "EN": {
+    "label": "English",
+    "file": "EN.json",
+    "value": "EN"
+  },
+  "TR": {
+    "label": "Türkçe",
+    "file": "TR.json",
+    "value": "TR"
+  },
+  "DE": {
+    "label": "Deutsch",
+    "file": "DE.json",
+    "value": "DE"
+  },
+  "RU": {
+    "label": "Русский",
+    "file": "RU.json",
+    "value": "RU"
+  },
+  "FR": {
+    "label": "Français",
+    "file": "FR.json",
+    "value": "FR"
+  },
+  "IT": {
+    "label": "Italiano",
+    "file": "IT.json",
+    "value": "IT"
+  },
+  "ES": {
+    "label": "Español",
+    "file": "ES.json",
+    "value": "ES"
+  }
+}
