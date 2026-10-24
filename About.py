@@ -1,9 +1,9 @@
 import tkinter as tk
 from tkinter import ttk
-from Constants import icon_path
 from PIL import Image, ImageTk
 from ErrorHandler import error_handler
 from Functions import set_theme
+from Constants import icon_path
 import os, sys
 
 sys.excepthook = error_handler
@@ -16,16 +16,12 @@ def show_about(parent, language_data={}, theme="light"):
     window.attributes("-topmost", True)
     window.focus_force()
 
-    if os.path.exists(icon_path):
-        icon = tk.PhotoImage(file=icon_path)
-        window.iconphoto(True, icon)
-
     style = ttk.Style()
     style.theme_use("default")
 
     set_theme(window=window, theme=theme, style=style)
 
-    image = Image.open(icon_path)
+    image = Image.open(icon_path, formats=["ico"])
     image = image.resize((64, 64))
     image_tk = ImageTk.PhotoImage(image)
 

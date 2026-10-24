@@ -27,8 +27,7 @@ win.title("BukiLauncher")
 win.resizable(False, False)
 
 if os.path.exists(icon_path):
-    icon = tk.PhotoImage(file=icon_path)
-    win.iconphoto(True, icon)
+    win.iconbitmap(icon_path)
 
 if os.path.exists(default_configuration_file):
     with open(default_configuration_file, "r", encoding="utf-8") as f:
@@ -290,6 +289,7 @@ def update_settings(event=None):
 
     loader_combobox.config(state="readonly" if is_connected() else "disabled")
     loader_version_combobox.config(state="readonly" if is_connected() else "disabled")
+    mod_manager_button.config(state="disabled" if loader_combobox.get() == "Vanilla" else "normal")
 
     save_settings()
 

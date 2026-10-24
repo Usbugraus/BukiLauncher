@@ -1,7 +1,6 @@
 import minecraft_launcher_lib, multiprocessing, os
 import tkinter as tk
 from tkinter import ttk
-from Constants import icon_path
 from ErrorHandler import error_handler
 from Functions import set_theme
 import sys
@@ -24,10 +23,6 @@ def install(parent=None, language_data={}, theme="light" ,version="", mod_loader
     window.resizable(False, False)
     window.transient()
     window.focus_force()
-
-    if os.path.exists(icon_path):
-        icon = tk.PhotoImage(file=icon_path)
-        window.iconphoto(True, icon)
 
     style = ttk.Style()
     style.theme_use("default")
