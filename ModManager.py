@@ -46,11 +46,12 @@ def shorten_number(number):
 
     return None
 
-def mod_manager(parent, version="", loader="vanilla", language_data={}, tooltips=True, theme="light", minecraft_directory=""):
+def mod_manager(parent, version="", loader="vanilla", language_data=None, tooltips=True, theme="light", minecraft_directory=""):
     current_page = 0
     mods = None
     search = ""
-    current_mod_file = ""
+    current_mod_files = []
+    search_timer = None
 
     window = tk.Toplevel(parent)
     window.title(language_data.get("ModManager.Title"))
@@ -136,6 +137,8 @@ def mod_manager(parent, version="", loader="vanilla", language_data={}, tooltips
         return False, None
 
     def is_mod_installed(slug):
+        current_mod_files.clear()
+
         mods_directory = os.path.join(minecraft_directory, "mods")
         if not os.path.exists(mods_directory):
             return False
@@ -150,6 +153,7 @@ def mod_manager(parent, version="", loader="vanilla", language_data={}, tooltips
                     for file_info in files:
                         file_name = file_info.get("filename")
                         file_path = os.path.join(mods_directory, file_name)
+                        current_mod_files.append(file_path)
                         if os.path.exists(file_path):
                             return True, v_info["id"]
         except Exception:
@@ -158,7 +162,6 @@ def mod_manager(parent, version="", loader="vanilla", language_data={}, tooltips
         return False, None
 
     def download_mod(slug):
-        nonlocal current_mod_file
 
         mods_directory = os.path.join(minecraft_directory, "mods")
 
@@ -184,6 +187,7 @@ def mod_manager(parent, version="", loader="vanilla", language_data={}, tooltips
                         continue
 
                     files = v_info.get("files", [])
+
                     if files:
                         target_file = files[0]
                         break
@@ -197,8 +201,6 @@ def mod_manager(parent, version="", loader="vanilla", language_data={}, tooltips
 
                 os.makedirs(mods_directory, exist_ok=True)
                 file_path = os.path.join(mods_directory, file_name)
-
-                current_mod_file = file_path
 
                 file_res = requests.get(file_url, timeout=30)
                 if file_res.status_code == 200:
@@ -214,12 +216,18 @@ def mod_manager(parent, version="", loader="vanilla", language_data={}, tooltips
 
         status_label.config(text=f"{current_page + 1} / {mods[1]}")
         update_button.config(state="disabled")
+        update_details()
 
     def delete_mod():
         mods_directory = os.path.join(minecraft_directory, "mods")
-        file_path = os.path.join(mods_directory, current_mod_file)
+        file_path = ""
 
         status_label.config(text=language_data.get("ModManager.Delete"))
+
+        for f in current_mod_files:
+            if os.path.exists(os.path.join(mods_directory, f)):
+                file_path = os.path.join(mods_directory, f)
+                break
 
         try:
             if os.path.exists(file_path):
@@ -229,10 +237,16 @@ def mod_manager(parent, version="", loader="vanilla", language_data={}, tooltips
             status_label.config(text=language_data.get("ModManager.DeleteError"))
             return
 
-    def refresh(page, search=""):
+        status_label.config(text=f"{current_page + 1} / {mods[1]}")
+        update_details()
+
+    def refresh(page):
         nonlocal mods, current_page
 
+        current_page = page
+
         status_label.config(text=language_data.get("ModManager.Loading"))
+        mods_tree.selection_remove(mods_tree.selection())
         mods_tree.delete(*mods_tree.get_children())
         mod_icon.grid_forget()
         mod_title.grid_forget()
@@ -240,15 +254,16 @@ def mod_manager(parent, version="", loader="vanilla", language_data={}, tooltips
         mod_toolbar.grid_forget()
 
         if search.strip() != "":
-            mods = fetch_mods(version=version, loader=loader, offset=page, query=search)
+            mods = fetch_mods(version=version, loader=loader, offset=page * 30, query=search)
         else:
-            mods = fetch_mods(version=version, loader=loader, offset=page)
+            mods = fetch_mods(version=version, loader=loader, offset=page * 30)
 
         if mods is not None:
             for mod in mods[0]:
                 mods_tree.insert("", tk.END, values=(mod.get("title"), mod.get("author"), shorten_number(mod.get("downloads")), shorten_number(mod.get("follows"))))
 
-            status_label.config(text=f"{current_page + 1} / {mods[1]}")
+            total_pages = max(1, (mods[1] + 29) // 30)
+            status_label.config(text=f"{current_page + 1} / {total_pages}")
         else:
             status_label.config(text=language_data.get("ModManager.LoadError"))
 
@@ -263,7 +278,10 @@ def mod_manager(parent, version="", loader="vanilla", language_data={}, tooltips
             else:
                 next_button.config(state="normal")
 
-    def update_details(evet=None):
+    def update_details(event=None):
+        if mods is None or not mods[0]:
+            return
+
         mod_icon.grid(row=0, column=0, padx=(0, 10), pady=(0, 10), sticky="nw")
         mod_title.grid(row=0, column=1, pady=(0, 10), sticky="nw")
         mod_description.grid(row=1, column=1, sticky="nw")
@@ -275,6 +293,9 @@ def mod_manager(parent, version="", loader="vanilla", language_data={}, tooltips
             selected_index = mods_tree.index(selected_mod[0])
         else:
             selected_index = 0
+
+        if selected_index >= len(mods[0]):
+            return
 
         def update_icon(image):
             mod_icon.config(image=image)
@@ -290,8 +311,13 @@ def mod_manager(parent, version="", loader="vanilla", language_data={}, tooltips
                 return
 
         threading.Thread(target=download_icon).start()
-        mod_title.config(text=mods[0][selected_index].get("title"))
-        mod_description.config(text=mods[0][selected_index].get("description"))
+        print(len(mods))
+        if mods is not None:
+            mod_title.config(text=mods[0][selected_index].get("title"))
+            mod_description.config(text=mods[0][selected_index].get("description"))
+        else:
+            mod_title.grid_forget()
+            mod_description.grid_forget()
 
         installed = is_mod_installed(mods[0][selected_index].get("slug"))
         has_update, latest_version = check_mod_updates(mods[0][selected_index].get("slug"), installed[1])
@@ -310,20 +336,26 @@ def mod_manager(parent, version="", loader="vanilla", language_data={}, tooltips
             update_button.config(state="disabled")
 
     def previous():
-        nonlocal current_page
-        current_page -= 1
-        threading.Thread(target=lambda: refresh(current_page * 30, search=search), daemon=True).start()
+        if current_page > 0:
+            threading.Thread(target=lambda: refresh(current_page - 1), daemon=True).start()
 
     def next():
-        nonlocal current_page
-        current_page += 1
-        threading.Thread(target=lambda: refresh(current_page * 30, search=search), daemon=True).start()
+        if mods:
+            total_pages = max(1, (mods[1] + 29) // 30)
+            if current_page < total_pages - 1:
+                threading.Thread(target=lambda: refresh(current_page + 1), daemon=True).start()
 
     def search_mods(event=None):
-        nonlocal search
-        search = search_entry.get()
+        nonlocal search, search_timer
+        new_search = search_entry.get()
 
-        threading.Thread(target=lambda: refresh(current_page, search=search), daemon=True).start()
+        if new_search != search:
+            search = new_search
+
+            if search_timer is not None:
+                window.after_cancel(search_timer)
+
+            search_timer = window.after(300, lambda: threading.Thread(target=lambda: refresh(0), daemon=True).start())
 
     def download():
         selected_mod = mods_tree.selection()
@@ -350,7 +382,7 @@ def mod_manager(parent, version="", loader="vanilla", language_data={}, tooltips
     open_dir_button.grid(row=0, column=0)
     Tooltip(open_dir_button, text=language_data.get("Tooltip.ModManager.OpenDirectory"), shown=tooltips)
 
-    refresh_button = ttk.Button(action_toolbar, text="\ue117", style="ToolbarButton.TButton", command=lambda: threading.Thread(target=lambda: refresh(current_page * 30, search=search), daemon=True).start())
+    refresh_button = ttk.Button(action_toolbar, text="\ue117", style="ToolbarButton.TButton", command=lambda: threading.Thread(target=lambda: refresh(current_page), daemon=True).start())
     refresh_button.grid(row=0, column=1)
     Tooltip(refresh_button, text=language_data.get("Tooltip.ModManager.Refresh"), shown=tooltips)
 
@@ -377,4 +409,4 @@ def mod_manager(parent, version="", loader="vanilla", language_data={}, tooltips
     mods_tree.bind("<<TreeviewSelect>>", lambda e: threading.Thread(target=update_details, daemon=True).start())
     search_entry.bind("<KeyRelease>", search_mods)
 
-    refresh(current_page * 30)
+    refresh(0)

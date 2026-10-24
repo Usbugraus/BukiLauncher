@@ -1,8 +1,8 @@
 {
     "username": "Player",
     "version": "26.3",
-    "loader": "Vanilla",
-    "loader_version": "",
+    "loader": "Fabric",
+    "loader_version": "0.20.1",
     "show_snapshots": false,
     "hide_when_launch": true,
     "show_tooltips": true,

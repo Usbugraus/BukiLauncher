@@ -4,7 +4,7 @@ from PIL import Image, ImageTk
 from ErrorHandler import error_handler
 from Functions import set_theme
 from Constants import icon_path
-import os, sys
+import sys
 
 sys.excepthook = error_handler
 
@@ -25,7 +25,7 @@ def show_about(parent, language_data={}, theme="light"):
     image = image.resize((64, 64))
     image_tk = ImageTk.PhotoImage(image)
 
-    header_label = ttk.Label(window, text=language_data.get("About.Title"), font=("Segoe UI", 12, "bold")).pack(padx=20 , pady=20)
+    ttk.Label(window, text=language_data.get("About.Title"), font=("Segoe UI", 12, "bold")).pack(padx=20 , pady=20)
 
     main_frame = ttk.Frame(window, style="Out.TFrame", padding=10)
     main_frame.pack(padx=20, pady=(0, 20))
