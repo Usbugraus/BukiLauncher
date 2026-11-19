@@ -1,50 +1,15 @@
 import os, sys, requests, threading
 import tkinter as tk
-from tkinter import ttk
+import shutil
+from tkinter import ttk, filedialog
 from Functions import set_theme, is_connected
 from ErrorHandler import error_handler
+from Constants import icon_path
 from Tooltips import Tooltip
 from PIL import Image, ImageTk
 from io import BytesIO
 
 sys.excepthook = error_handler
-
-def fetch_mods(version, loader, query="", limit=30, offset=0):
-    if is_connected():
-        api_url = "https://api.modrinth.com/v2/search"
-
-        facets = f'[["project_type:mod"],["versions:{version}"],["categories:{loader.lower()}"]]'
-
-        params = {
-            "limit": limit,
-            "offset": offset,
-            "facets": facets
-        }
-
-        if query:
-            params["query"] = query
-
-        try:
-            response = requests.get(api_url, params=params, timeout=1)
-            if response.status_code == 200:
-                data = response.json()
-                return data.get("hits", []), data.get("total_hits", 0)
-        except Exception:
-            return None
-    else:
-        return None
-
-    return None
-
-def shorten_number(number):
-    length = len(str(number))
-
-    if 4 <= length < 7:
-        return f"{number // 1000} K"
-    elif length >= 7:
-        return f"{number // 1000000} M"
-
-    return None
 
 def mod_manager(parent, version="", loader="vanilla", language_data=None, tooltips=True, theme="light", minecraft_directory=""):
     current_page = 0
@@ -52,12 +17,17 @@ def mod_manager(parent, version="", loader="vanilla", language_data=None, toolti
     search = ""
     current_mod_files = []
     search_timer = None
+    user_agent = "Usbugraus/BukiLauncher/v2026.11 (usbugraus@gmail.com)"
 
     window = tk.Toplevel(parent)
     window.title(language_data.get("ModManager.Title"))
     window.resizable(False, False)
     window.transient(parent)
     window.focus_force()
+    window.grab_set()
+
+    if os.path.exists(icon_path):
+        window.iconbitmap(icon_path)
 
     style = ttk.Style()
     style.theme_use("default")
@@ -66,10 +36,10 @@ def mod_manager(parent, version="", loader="vanilla", language_data=None, toolti
 
     ttk.Label(window, text=language_data.get("ModManager.Title"), font=("Segoe UI", 12, "bold")).pack(padx=20, pady=(20, 0))
 
-    main_frame = ttk.Frame(window, style="Out.TFrame", padding=10)
+    main_frame = ttk.Frame(window, borderwidth=1, relief="raised", padding=10)
     main_frame.pack(padx=20, pady=20)
 
-    action_frame = ttk.Frame(main_frame, style="Out.TFrame", padding=10)
+    action_frame = ttk.Frame(main_frame, borderwidth=1, relief="raised", padding=10)
     action_frame.pack(side="top", fill="x", pady=(0, 10))
 
     action_toolbar = ttk.Frame(action_frame)
@@ -78,27 +48,25 @@ def mod_manager(parent, version="", loader="vanilla", language_data=None, toolti
     navigation_toolbar = ttk.Frame(action_frame)
     navigation_toolbar.grid(row=0, column=1, padx=(0, 10))
 
-    search_entry = ttk.Entry(action_frame, width=90)
+    search_entry = ttk.Entry(action_frame, width=88)
     search_entry.grid(row=0, column=2, sticky="ew")
 
-    mods_frame = ttk.Frame(main_frame, style="Out.TFrame", padding=10)
+    mods_frame = ttk.Frame(main_frame, borderwidth=1, relief="raised", padding=10)
     mods_frame.pack(side="left", padx=(0, 10))
 
-    details_frame = ttk.Frame(main_frame, style="Out.TFrame", padding=10, width=400)
+    details_frame = ttk.Frame(main_frame, borderwidth=1, relief="raised", padding=10, width=400)
     details_frame.pack(side="right", fill="y")
     details_frame.grid_propagate(False)
 
     mod_icon = ttk.Label(details_frame, borderwidth=1, relief="raised")
-    mod_icon.grid(row=0, column=0, padx=(0, 10), pady=(0, 10), sticky="nw")
 
-    mod_title = ttk.Label(details_frame, font=("Segoe UI", 12, "bold"), wraplength=200, anchor="w")
-    mod_title.grid(row=0, column=1, pady=(0, 10), sticky="nw")
+    title_description_frame = ttk.Frame(details_frame, width=200)
 
-    mod_description = ttk.Label(details_frame, wraplength=275, anchor="w")
-    mod_description.grid(row=1, column=1, sticky="nw")
+    mod_title = ttk.Label(title_description_frame, font=("Segoe UI", 12, "bold"), wraplength=150, anchor="w")
+
+    mod_description = ttk.Label(title_description_frame, wraplength=275, anchor="w")
 
     mod_toolbar = ttk.Frame(details_frame)
-    mod_toolbar.grid(row=1, column=0, sticky="nw")
 
     status_label = ttk.Label(mods_frame, anchor="w")
     status_label.pack(side="top", fill="x", pady=(0, 10))
@@ -119,10 +87,51 @@ def mod_manager(parent, version="", loader="vanilla", language_data=None, toolti
 
     mods_tree.configure(yscrollcommand=scrollbar.set)
 
+    def fetch_mods(version, loader, query="", limit=30, offset=0):
+        if is_connected():
+            api_url = "https://api.modrinth.com/v2/search"
+
+            facets = f'[["project_type:mod"],["versions:{version}"],["categories:{loader.lower()}"]]'
+
+            params = {
+                "limit": limit,
+                "offset": offset,
+                "facets": facets
+            }
+
+            headers = {"User-Agent": user_agent}
+
+            if query:
+                params["query"] = query
+
+            try:
+                response = requests.get(api_url, params=params, headers=headers, timeout=1)
+                if response.status_code == 200:
+                    data = response.json()
+                    return data.get("hits", []), data.get("total_hits", 0)
+            except Exception:
+                return None
+        else:
+            return None
+
+        return None
+
+    def shorten_number(number):
+        length = len(str(number))
+
+        if 4 <= length < 7:
+            return f"{number // 1000} K"
+        elif length >= 7:
+            return f"{number // 1000000} M"
+        else:
+            return number
+
     def check_mod_updates(slug, current_version_id):
         versions_url = f"https://api.modrinth.com/v2/project/{slug}/version"
+        headers = {"User-Agent": user_agent}
+
         try:
-            response = requests.get(versions_url, timeout=10)
+            response = requests.get(versions_url, headers=headers, timeout=10)
             if response.status_code == 200:
                 versions_data = response.json()
                 for v_info in versions_data:
@@ -139,13 +148,20 @@ def mod_manager(parent, version="", loader="vanilla", language_data=None, toolti
     def is_mod_installed(slug):
         current_mod_files.clear()
 
+        params = {
+            "loaders": loader,
+            "game_versions": version
+        }
+
+        headers = {"User-Agent": user_agent}
+
         mods_directory = os.path.join(minecraft_directory, "mods")
         if not os.path.exists(mods_directory):
             return False
 
         versions_url = f"https://api.modrinth.com/v2/project/{slug}/version"
         try:
-            response = requests.get(versions_url, timeout=5)
+            response = requests.get(versions_url,params=params, headers=headers, timeout=5)
             if response.status_code == 200:
                 versions_data = response.json()
                 for v_info in versions_data:
@@ -171,8 +187,10 @@ def mod_manager(parent, version="", loader="vanilla", language_data=None, toolti
 
             versions_url = f"https://api.modrinth.com/v2/project/{slug}/version"
 
+            headers = {"User-Agent": user_agent}
+
             try:
-                response = requests.get(versions_url, timeout=10)
+                response = requests.get(versions_url, headers=headers, timeout=10)
                 if response.status_code != 200:
                     status_label.config(text=language_data.get("ModManager.DownloadError"))
                     return
@@ -282,9 +300,13 @@ def mod_manager(parent, version="", loader="vanilla", language_data=None, toolti
         if mods is None or not mods[0]:
             return
 
+        if not details_frame.winfo_exists():
+            return
+
         mod_icon.grid(row=0, column=0, padx=(0, 10), pady=(0, 10), sticky="nw")
-        mod_title.grid(row=0, column=1, pady=(0, 10), sticky="nw")
-        mod_description.grid(row=1, column=1, sticky="nw")
+        title_description_frame.grid(row=0, column=1, padx=(0, 10), rowspan=2, sticky="nw")
+        mod_title.grid(row=0, column=0, pady=(0, 10), sticky="nw")
+        mod_description.grid(row=1, column=0, sticky="nw")
         mod_toolbar.grid(row=1, column=0, sticky="nw")
 
         selected_mod = mods_tree.selection()
@@ -311,7 +333,6 @@ def mod_manager(parent, version="", loader="vanilla", language_data=None, toolti
                 return
 
         threading.Thread(target=download_icon).start()
-        print(len(mods))
         if mods is not None:
             mod_title.config(text=mods[0][selected_index].get("title"))
             mod_description.config(text=mods[0][selected_index].get("description"))
@@ -319,9 +340,11 @@ def mod_manager(parent, version="", loader="vanilla", language_data=None, toolti
             mod_title.grid_forget()
             mod_description.grid_forget()
 
-        installed = is_mod_installed(mods[0][selected_index].get("slug"))
-        has_update, latest_version = check_mod_updates(mods[0][selected_index].get("slug"), installed[1])
-
+        try:
+            installed = is_mod_installed(mods[0][selected_index].get("slug"))
+            has_update, latest_version = check_mod_updates(mods[0][selected_index].get("slug"), installed[1])
+        except:
+            return
 
         if installed[0]:
             download_button.config(state="disabled")
@@ -375,15 +398,25 @@ def mod_manager(parent, version="", loader="vanilla", language_data=None, toolti
         else:
             selected_index = 0
 
-        delete_mod()
+        threading.Thread(target=delete_mod, daemon=True).start()
         threading.Thread(target=lambda: download_mod(mods[0][selected_index].get("slug")), daemon=True).start()
+
+    def import_mod():
+        selection = filedialog.askopenfilename(parent=window, title=language_data.get("ModManager.ImportMod.Title"), filetypes=[(language_data.get("ModManager.ImportMod.JavaArchive"),".jar")])
+
+        if selection:
+            shutil.move(selection, os.path.join(minecraft_directory, "mods"))
 
     open_dir_button = ttk.Button(action_toolbar, text="\ue197", command=lambda: os.startfile(os.path.join(minecraft_directory, "mods")), style="ToolbarButton.TButton")
     open_dir_button.grid(row=0, column=0)
     Tooltip(open_dir_button, text=language_data.get("Tooltip.ModManager.OpenDirectory"), shown=tooltips)
 
+    import_button = ttk.Button(action_toolbar, text="\ue109", command=import_mod, style="ToolbarButton.TButton")
+    import_button.grid(row=0, column=1)
+    Tooltip(import_button, text=language_data.get("Tooltip.ModManager.ImportMod"), shown=tooltips)
+
     refresh_button = ttk.Button(action_toolbar, text="\ue117", style="ToolbarButton.TButton", command=lambda: threading.Thread(target=lambda: refresh(current_page), daemon=True).start())
-    refresh_button.grid(row=0, column=1)
+    refresh_button.grid(row=0, column=2)
     Tooltip(refresh_button, text=language_data.get("Tooltip.ModManager.Refresh"), shown=tooltips)
 
     previous_button = ttk.Button(navigation_toolbar, text="\ue00e", command=previous, style="ToolbarButton.TButton")
@@ -398,15 +431,15 @@ def mod_manager(parent, version="", loader="vanilla", language_data=None, toolti
     download_button.grid(row=0, column=0)
     Tooltip(download_button, text=language_data.get("Tooltip.ModManager.Download"), shown=tooltips)
 
-    update_button = ttk.Button(mod_toolbar, text="\ue149", command=download, style="ToolbarButton.TButton")
+    update_button = ttk.Button(mod_toolbar, text="\ue149", command=update, style="ToolbarButton.TButton")
     update_button.grid(row=0, column=1)
     Tooltip(update_button, text=language_data.get("Tooltip.ModManager.Update"), shown=tooltips)
 
-    delete_button = ttk.Button(mod_toolbar, text="\ue107", command=delete_mod, style="DangerousToolbarButton.TButton")
+    delete_button = ttk.Button(mod_toolbar, text="\ue107", command=lambda: threading.Thread(target=delete_mod, daemon=True).start(), style="DangerousToolbarButton.TButton")
     delete_button.grid(row=0, column=2)
     Tooltip(delete_button, text=language_data.get("Tooltip.ModManager.Delete"), shown=tooltips)
 
     mods_tree.bind("<<TreeviewSelect>>", lambda e: threading.Thread(target=update_details, daemon=True).start())
     search_entry.bind("<KeyRelease>", search_mods)
 
-    refresh(0)
+    threading.Thread(target=lambda: refresh(0), daemon=True).start()

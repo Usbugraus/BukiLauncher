@@ -6,6 +6,7 @@
     "show_snapshots": false,
     "hide_when_launch": true,
     "show_tooltips": true,
+    "crash_report": true,
     "java_path": null,
     "minecraft_directory": null,
     "jvm_args": [],

@@ -3,41 +3,19 @@
     "background": "#f0f0f0"
   },
   "frame": {
-    "flat": {
-      "background": "#f0f0f0",
-      "borderwidth": 1,
-      "relief": "flat"
-    },
-    "outset": {
-      "background": "#f0f0f0",
-      "borderwidth": 1,
-      "relief": "raised"
-    },
-    "inset": {
-      "background": "#f0f0f0",
-      "borderwidth": 1,
-      "relief": "sunken"
-    }
+    "background": "#f0f0f0",
+    "borderwidth": 1,
+    "relief": "flat"
   },
   "labelframe": {
     "label": {
       "background": "#f0f0f0",
       "foreground": "#000000"
     },
-    "flat": {
+    "frame": {
       "background": "#f0f0f0",
       "borderwidth": 1,
       "relief": "flat"
-    },
-    "outset": {
-      "background": "#f0f0f0",
-      "borderwidth": 1,
-      "relief": "raised"
-    },
-    "inset": {
-      "background": "#f0f0f0",
-      "borderwidth": 1,
-      "relief": "sunken"
     }
   },
   "label": {

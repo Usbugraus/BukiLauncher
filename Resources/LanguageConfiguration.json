@@ -33,5 +33,15 @@
     "label": "Español",
     "file": "ES.json",
     "value": "ES"
+  },
+  "JA": {
+    "label": "日本語",
+    "file": "JA.json",
+    "value": "JA"
+  },
+  "KO": {
+    "label": "한국인",
+    "file": "KO.json",
+    "value": "KO"
   }
 }

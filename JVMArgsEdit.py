@@ -2,6 +2,7 @@ import tkinter as tk
 from tkinter import ttk
 from ErrorHandler import error_handler
 from Functions import set_theme
+from Constants import icon_path
 import os, sys
 
 sys.excepthook = error_handler
@@ -10,24 +11,27 @@ def set_jvm_arguments(parent, language_data={}, jvm_args=[], theme="light"):
     arguments = []
 
     window = tk.Toplevel(parent)
-    window.title(language_data.get("JVMArgsEdit.Title"))
+    window.title(language_data.get("JVMArgs.Title"))
     window.resizable(False, False)
     window.transient(parent)
     window.focus_force()
+
+    if os.path.exists(icon_path):
+        window.iconbitmap(icon_path)
 
     style = ttk.Style()
     style.theme_use("default")
 
     set_theme(window=window, theme=theme, style=style)
 
-    ttk.Label(window, text=language_data.get("JVMArgsEdit.Title"), font=("Segoe UI", 12, "bold")).pack(padx=20, pady=20)
+    ttk.Label(window, text=language_data.get("JVMArgs.Title"), font=("Segoe UI", 12, "bold")).pack(padx=20, pady=20)
 
-    main_frame = ttk.Frame(window, style="Out.TFrame", padding=10)
+    main_frame = ttk.Frame(window, borderwidth=1, relief="raised", padding=10)
     main_frame.pack(padx=20, pady=(0, 20))
 
-    ttk.Label(main_frame, text=language_data.get("JVMArgsEdit.Content"), wraplength=380, justify="center").pack(pady=(0, 10))
+    ttk.Label(main_frame, text=language_data.get("JVMArgs.Content"), wraplength=450, justify="center").pack(pady=(0, 10))
 
-    jvm_frame = ttk.Frame(main_frame, style="Out.TFrame", padding=10)
+    jvm_frame = ttk.Frame(main_frame, borderwidth=1, relief="raised", padding=10)
     jvm_frame.pack()
 
     jvm_text = tk.Text(jvm_frame, height=12, width=50, font=("Consolas", 9), wrap="none")

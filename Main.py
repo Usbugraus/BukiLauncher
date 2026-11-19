@@ -1,14 +1,13 @@
 import tkinter as tk
 from tkinter import ttk, filedialog, messagebox
 from Functions import is_connected, get_minecraft_versions, is_version_installed, launch_minecraft, update_widgets, open_minecraft_directory, set_theme
-from MCInstaller import install
-from Constants import icon_path, configuration_file, default_configuration_file, language_configuration_file, fonts_directory, theme_configuration_file
+from MCInstaller import InstallerFrame
+from Constants import icon_path, configuration_file, default_configuration_file, language_configuration_file, theme_configuration_file
 from Tooltips import Tooltip
 from JVMArgsEdit import set_jvm_arguments
 from ErrorHandler import error_handler
 from About import show_about
 from UUIDEdit import set_uuid
-from CrashReport import crash_report
 from ModManager import mod_manager
 import os, json, sys, minecraft_launcher_lib, ctypes, threading
 
@@ -80,6 +79,7 @@ except json.JSONDecodeError as e:
 snapshots_variable = tk.BooleanVar(value=configuration.get("show_snapshots"))
 hide_when_launch_variable = tk.BooleanVar(value=configuration.get("hide_when_launch"))
 tooltips_variable = tk.BooleanVar(value=configuration.get("show_tooltips"))
+crash_report_variable = tk.BooleanVar(value=configuration.get("crash_report"))
 theme_variable = tk.StringVar(value=configuration.get("theme"))
 language_variable = tk.StringVar(value=configuration.get("language"))
 
@@ -105,11 +105,13 @@ else:
 style = ttk.Style()
 style.theme_use("default")
 
-header_label = ttk.Label(win, text="BukiLauncher", font=("Segoe UI", 12, "bold"))
-header_label.pack(padx=20, pady=20)
+header_label = ttk.Label(win, text="BukiLauncher", font=("Segoe UI", 12, "bold"), anchor="center")
+header_label.grid(row=0, sticky="ew", padx=20, pady=20)
 
-options_frame = ttk.Frame(win, style="Out.TFrame", padding=10)
-options_frame.pack(padx=20, pady=(0, 20))
+options_frame = ttk.Frame(win, borderwidth=1, relief="raised", padding=10)
+options_frame.grid(row=1, padx=20, pady=(0, 20))
+
+installer = InstallerFrame(parent=win, language_data=language_data, theme=theme_variable.get())
 
 username_label = ttk.Label(options_frame, text="")
 version_label = ttk.Label(options_frame, text="")
@@ -135,10 +137,10 @@ version_combobox.set(configuration.get("version"))
 loader_combobox.set(configuration.get("loader"))
 loader_version_combobox.set(configuration.get("loader_version"))
 
-def select_java(parent=None):
+def select_java():
     global java
 
-    java_path = filedialog.askopenfilename(parent=parent, filetypes=[(language_data.get("SelectJava.Executable"), "java.exe javaw.exe")], title=language_data.get("SelectJava.Title"))
+    java_path = filedialog.askopenfilename(parent=win, filetypes=[(language_data.get("SelectJava.Executable"), "java.exe javaw.exe")], title=language_data.get("SelectJava.Title"))
     if java_path:
         java = java_path
 
@@ -167,31 +169,37 @@ def launch():
         )
 
         if installed:
-            out = launch_minecraft(
-                window=win,
-                username=username_entry.get(),
-                version=version_combobox.get(),
-                mod_loader=loader_combobox.get().lower(),
-                loader_version=loader_version_combobox.get(),
-                java_path=java,
-                hide_window=hide_when_launch_variable.get(),
-                jvm_arguments=jvm_args,
-                minecraft_directory=minecraft_directory
-            )
-            if out[2] != 0:
-                crash_report(win, language_data=language_data, stderr=out[1], theme=theme_variable.get())
-        else:
-            try:
-                install(
-                    parent=win,
-                    language_data=language_data,
-                    theme=theme_variable.get(),
+            threading.Thread(
+                target=lambda: launch_minecraft(
+                    window=win,
+                    username=username_entry.get(),
                     version=version_combobox.get(),
                     mod_loader=loader_combobox.get().lower(),
                     loader_version=loader_version_combobox.get(),
                     java_path=java,
-                    minecraft_directory = minecraft_directory
-                )
+                    hide_window=hide_when_launch_variable.get(),
+                    jvm_arguments=jvm_args,
+                    minecraft_directory=minecraft_directory,
+                    language_data=language_data,
+                    theme=theme_variable.get(),
+                    uuid=uuid,
+                    show_crash_report=crash_report_variable.get()
+                ),
+                daemon=True
+            ).start()
+
+        else:
+            try:
+                threading.Thread(
+                    target= lambda: installer.install(
+                        version=version_combobox.get(),
+                        mod_loader=loader_combobox.get().lower(),
+                        loader_version=loader_version_combobox.get(),
+                        java_path=java,
+                        minecraft_directory = minecraft_directory
+                    ),
+                    daemon=True
+                ).start()
             except:
                 messagebox.showerror(language_data.get("Messagebox.Title.Error"), language_data.get("Messagebox.Content.InstallError"))
     else:
@@ -206,6 +214,7 @@ def save_settings():
         "show_snapshots": snapshots_variable.get(),
         "hide_when_launch": hide_when_launch_variable.get(),
         "show_tooltips": tooltips_variable.get(),
+        "crash_report": crash_report_variable.get(),
         "java_path": java,
         "minecraft_directory": minecraft_directory,
         "jvm_args": jvm_args,
@@ -217,13 +226,16 @@ def save_settings():
     with open(configuration_file, "w", encoding="utf-8") as f:
         json.dump(configuration, f, indent=4)
 
-
 def update_settings(event=None):
     global language_data
 
     triggered_widget = event.widget if event else None
 
     language_file = os.path.join("Resources", "Languages", language_configuration.get(language_variable.get()).get("file"))
+
+    if not os.path.exists(language_file):
+        messagebox.showerror("Error", "The language data file not found.")
+        sys.exit()
 
     with open(language_file, "r", encoding="utf-8") as f:
         language_data = json.load(f)
@@ -258,8 +270,8 @@ def update_settings(event=None):
             "themes": theme_menu
         },
         language_data=language_data,
-        java_selected=java,
-        theme=theme_variable.get()
+        java_path=java,
+        tooltip_shown=tooltips_variable.get()
     )
 
     versions = get_minecraft_versions(
@@ -291,6 +303,8 @@ def update_settings(event=None):
     loader_version_combobox.config(state="readonly" if is_connected() else "disabled")
     mod_manager_button.config(state="disabled" if loader_combobox.get() == "Vanilla" else "normal")
 
+    installer.configure(language_data=language_data, theme=theme_variable.get())
+
     save_settings()
 
 def edit_jvm_args():
@@ -310,7 +324,7 @@ def edit_uuid():
     threading.Thread(target=update_settings, daemon=True).start()
 
 toolbar = ttk.Frame(win, name="toolbar")
-toolbar.pack(padx=20, pady=(0, 20), fill="x")
+toolbar.grid(row=3, sticky="w", padx=20, pady=(0, 20))
 
 launch_button = ttk.Button(toolbar, text="\ue102", style="MarkedToolbarButton.TButton", command=launch, name="launch_button")
 launch_button.grid(row=0, column=0)
@@ -320,7 +334,7 @@ open_dir_button = ttk.Button(toolbar, text="\ue197", style="ToolbarButton.TButto
 open_dir_button.grid(row=0, column=1)
 open_dir_tooltip = Tooltip(open_dir_button, text="")
 
-mod_manager_button = ttk.Button(toolbar, text="\ue74c", style="ToolbarButton.TButton", command=lambda: threading.Thread(target=lambda: mod_manager(parent=win, version=version_combobox.get(), loader=loader_combobox.get(), theme=theme_variable.get(), language_data=language_data, minecraft_directory=minecraft_directory), daemon=True).start())
+mod_manager_button = ttk.Button(toolbar, text="\ue74c", style="ToolbarButton.TButton", command=lambda: mod_manager(parent=win, version=version_combobox.get(), loader=loader_combobox.get(), theme=theme_variable.get(), language_data=language_data, minecraft_directory=minecraft_directory, tooltips=tooltips_variable.get()))
 mod_manager_button.grid(row=0, column=2)
 mod_manager_tooltip = Tooltip(mod_manager_button, text="")
 
@@ -335,9 +349,10 @@ loader_combobox.bind("<<ComboboxSelected>>", update_settings)
 loader_version_combobox.bind("<<ComboboxSelected>>", update_settings)
 
 settings_menu = tk.Menu(win, tearoff=0)
-settings_menu.add_checkbutton(variable=snapshots_variable, command=update_settings)
-settings_menu.add_checkbutton(variable=hide_when_launch_variable, command=update_settings)
-settings_menu.add_checkbutton(variable=tooltips_variable, command=update_settings)
+settings_menu.add_checkbutton(variable=snapshots_variable, command=lambda: threading.Thread(target=update_settings, daemon=True).start())
+settings_menu.add_checkbutton(variable=hide_when_launch_variable, command=lambda: threading.Thread(target=update_settings, daemon=True).start())
+settings_menu.add_checkbutton(variable=tooltips_variable, command=lambda: threading.Thread(target=update_settings, daemon=True).start())
+settings_menu.add_checkbutton(variable=crash_report_variable, command=lambda: threading.Thread(target=update_settings, daemon=True).start())
 settings_menu.add_command(command=select_java)
 settings_menu.add_command(command=select_minecraft_directory)
 settings_menu.add_command(command=edit_jvm_args)
@@ -346,12 +361,12 @@ settings_menu.add_command(command=edit_uuid)
 theme_menu = tk.Menu(settings_menu, tearoff=0)
 for thm in theme_configuration:
     thmconf = theme_configuration.get(thm)
-    theme_menu.add_radiobutton(value=thmconf.get("value"), variable=theme_variable, command=update_settings)
+    theme_menu.add_radiobutton(value=thmconf.get("value"), variable=theme_variable, command=lambda: threading.Thread(target=update_settings, daemon=True).start())
 
 language_menu = tk.Menu(settings_menu, tearoff=0)
 for lang in language_configuration:
     langconf = language_configuration.get(lang)
-    language_menu.add_radiobutton(label=langconf.get("label"), value=langconf.get("value"), variable=language_variable, command=update_settings)
+    language_menu.add_radiobutton(label=langconf.get("label"), value=langconf.get("value"), variable=language_variable, command=lambda: threading.Thread(target=update_settings, daemon=True).start())
 
 settings_menu.add_cascade(menu=theme_menu)
 settings_menu.add_cascade(menu=language_menu)

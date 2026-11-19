@@ -1,6 +1,7 @@
 import minecraft_launcher_lib
 import psutil, subprocess, os, json
 from Constants import theme_configuration_file
+from CrashReport import crash_report
 
 with open(theme_configuration_file, "r") as f:
     theme_configuration = json.load(f)
@@ -21,29 +22,32 @@ def is_connected():
     except Exception:
         return False
 
+
 def get_minecraft_versions(mod_loader="vanilla", snapshots=False, version="", minecraft_directory=""):
     minecraft_versions = []
     mod_loader_versions = []
 
     if is_connected():
-        if mod_loader == "vanilla":
-            for v in minecraft_launcher_lib.utils.get_version_list():
-                if v["type"] == "release":
-                    minecraft_versions.append(v["id"])
-                elif snapshots and v["type"] in ("snapshot", "old_beta", "old_alpha"):
-                    minecraft_versions.append(v["id"])
+        try:
+            if mod_loader == "vanilla":
+                for v in minecraft_launcher_lib.utils.get_version_list():
+                    if v["type"] == "release":
+                        minecraft_versions.append(v["id"])
+                    elif snapshots and v["type"] in ("snapshot", "old_beta", "old_alpha"):
+                        minecraft_versions.append(v["id"])
 
-        else:
-            loader = minecraft_launcher_lib.mod_loader.get_mod_loader(mod_loader)
+            else:
+                loader = minecraft_launcher_lib.mod_loader.get_mod_loader(mod_loader)
+                minecraft_versions = loader.get_minecraft_versions(stable_only=not snapshots)
 
-            minecraft_versions = loader.get_minecraft_versions(stable_only=not snapshots)
+                if version:
+                    try:
+                        mod_loader_versions = loader.get_loader_versions(version, stable_only=False)
+                    except Exception:
+                        mod_loader_versions = []
 
-            if version:
-                try:
-                    mod_loader_versions = loader.get_loader_versions(version, stable_only=False)
-                except Exception:
-                    mod_loader_versions = []
-
+        except:
+            minecraft_versions = [v["id"] for v in minecraft_launcher_lib.utils.get_installed_versions(minecraft_directory)]
     else:
         minecraft_versions = [v["id"] for v in minecraft_launcher_lib.utils.get_installed_versions(minecraft_directory)]
 
@@ -69,7 +73,7 @@ def is_version_installed(version="", mod_loader="vanilla", loader_version="", mi
 
     return True
 
-def launch_minecraft(window, username="", version="", mod_loader="vanilla", loader_version="", jvm_arguments=[], java_path="", hide_window=True, minecraft_directory=""):
+def launch_minecraft(window, username="", version="", mod_loader="vanilla", loader_version="", jvm_arguments=[], java_path="", hide_window=True, minecraft_directory="", language_data=None, theme="light", uuid=None, show_crash_report=True):
 
     target_id = ""
     if mod_loader == "vanilla":
@@ -86,6 +90,7 @@ def launch_minecraft(window, username="", version="", mod_loader="vanilla", load
 
     options = {
         "username": username,
+        "uuid": uuid,
         "jvmArguments": jvm_arguments,
         "launcherName": "BukiLauncher",
         "launcherVersion": "2026.5.0",
@@ -99,15 +104,16 @@ def launch_minecraft(window, username="", version="", mod_loader="vanilla", load
         window.withdraw()
 
     button.config(state="disabled")
-    process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True,)
+    process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, creationflags=subprocess.CREATE_NO_WINDOW, encoding="utf-8", errors="replace")
     stdout, stderr = process.communicate()
     button.config(state="normal")
 
     window.deiconify()
 
-    return stdout, stderr, process.returncode
+    if process.returncode != 0 and show_crash_report is True and stderr.strip() != "":
+        crash_report(window, language_data=language_data, stderr=stderr, theme=theme)
 
-def update_widgets(widgets=None, tooltips=None, tooltip_shown=True, menus=None, language_data=None, java_selected=False, theme="light"):
+def update_widgets(widgets=None, tooltips=None, tooltip_shown=True, menus=None, language_data=None, java_path=None):
     widgets[0].config(text=language_data.get("Options.Username"))
     widgets[1].config(text=language_data.get("Options.MinecraftVersion"))
     widgets[2].config(text=language_data.get("Options.Loader"))
@@ -116,18 +122,14 @@ def update_widgets(widgets=None, tooltips=None, tooltip_shown=True, menus=None, 
     menus.get("settings").entryconfig(0, label=language_data.get("Settings.Snapshots"))
     menus.get("settings").entryconfig(1, label=language_data.get("Settings.HideWindow"))
     menus.get("settings").entryconfig(2, label=language_data.get("Settings.Tooltips"))
-
-    if theme == "light":
-        menus.get("settings").entryconfig(3, label=language_data.get("Settings.JavaSelected") if java_selected else language_data.get("Settings.JavaNotSelected"))
-    if theme == "dark":
-        menus.get("settings").entryconfig(3, label=language_data.get("Settings.JavaSelected") if java_selected else language_data.get("Settings.JavaNotSelected"))
-
-    menus.get("settings").entryconfig(4, label=language_data.get("Settings.SelectMCDir"))
-    menus.get("settings").entryconfig(5, label=language_data.get("Settings.JVMArgs"))
-    menus.get("settings").entryconfig(6, label=language_data.get("Settings.UUID"))
-    menus.get("settings").entryconfig(7, label=language_data.get("Settings.Theme"))
-    menus.get("settings").entryconfig(8, label=language_data.get("Settings.Language"))
-    menus.get("settings").entryconfig(10, label=language_data.get("Settings.About"))
+    menus.get("settings").entryconfig(3, label=language_data.get("Settings.CrashReport"))
+    menus.get("settings").entryconfig(4, label=f"{language_data.get("Settings.Java")}{java_path}" if java_path else language_data.get("Settings.JavaNotSelected"))
+    menus.get("settings").entryconfig(5, label=language_data.get("Settings.SelectMCDir"))
+    menus.get("settings").entryconfig(6, label=language_data.get("Settings.JVMArgs"))
+    menus.get("settings").entryconfig(7, label=language_data.get("Settings.UUID"))
+    menus.get("settings").entryconfig(8, label=language_data.get("Settings.Theme"))
+    menus.get("settings").entryconfig(9, label=language_data.get("Settings.Language"))
+    menus.get("settings").entryconfig(11, label=language_data.get("Settings.About"))
 
     values = list(theme_configuration.values())
     for thm in theme_configuration:
@@ -137,7 +139,7 @@ def update_widgets(widgets=None, tooltips=None, tooltip_shown=True, menus=None, 
     tooltips[0].configure(text=language_data.get("Tooltip.Launch"), shown=tooltip_shown)
     tooltips[1].configure(text=language_data.get("Tooltip.OpenDirectory"), shown=tooltip_shown)
     tooltips[3].configure(text=language_data.get("Tooltip.ModManager"), shown=tooltip_shown)
-    tooltips[2].configure(text=language_data.get("Tooltip.Settings"), shown=tooltip_shown),
+    tooltips[2].configure(text=language_data.get("Tooltip.Settings"), shown=tooltip_shown)
 
 def open_minecraft_directory(minecraft_directory=""):
     if not os.path.exists(minecraft_directory):
@@ -168,47 +170,24 @@ def set_theme(theme="light", window=None, style=None, textfield=None, menus=None
 
     style.theme_use("default")
 
-    window.configure(
-        bg=window_data.get("background")
-    )
+    if window:
+        window.configure(
+            bg=window_data.get("background")
+        )
+
     style.configure(
         "TFrame",
-        background=frame_data.get("flat").get("background"),
-        borderwidth = frame_data.get("flat").get("borderwidth"),
-        relief = frame_data.get("flat").get("relief")
-    )
-    style.configure(
-        "Out.TFrame",
-        background=frame_data.get("outset").get("background"),
-        borderwidth=frame_data.get("outset").get("borderwidth"),
-        relief=frame_data.get("outset").get("relief")
-    )
-    style.configure(
-        "In.TFrame",
-        background=frame_data.get("inset").get("background"),
-        borderwidth=frame_data.get("inset").get("borderwidth"),
-        relief=frame_data.get("inset").get("relief")
+        background=frame_data.get("background"),
+        borderwidth = frame_data.get("borderwidth"),
+        relief = frame_data.get("relief")
     )
 
     style.configure(
         "TLabelframe",
-        background=labelframe_data.get("flat").get("background"),
-        borderwidth=labelframe_data.get("flat").get("borderwidth"),
-        relief=labelframe_data.get("flat").get("relief")
+        background=labelframe_data.get("frame").get("background"),
+        borderwidth=labelframe_data.get("frame").get("borderwidth"),
+        relief=labelframe_data.get("frame").get("relief")
     )
-    style.configure(
-        "Out.TLabelframe",
-        background=labelframe_data.get("outset").get("background"),
-        borderwidth=labelframe_data.get("outset").get("borderwidth"),
-        relief=labelframe_data.get("outset").get("relief")
-    )
-    style.configure(
-        "In.TLabelframe",
-        background=labelframe_data.get("inset").get("background"),
-        borderwidth=labelframe_data.get("inset").get("borderwidth"),
-        relief=labelframe_data.get("inset").get("relief")
-    )
-
     style.configure(
         "TLabelframe.Label",
         background=labelframe_data.get("label").get("background"),
@@ -423,7 +402,7 @@ def set_theme(theme="light", window=None, style=None, textfield=None, menus=None
 
     if menus is not None:
         menus.get("settings").config(bg=menu_data.get("background"), fg=menu_data.get("foreground"))
-        menus.get("settings").entryconfig(3, foreground=menu_data.get("javaselected") if java_selected else menu_data.get("javanotselected"))
+        menus.get("settings").entryconfig(4, foreground=menu_data.get("javaselected") if java_selected else menu_data.get("javanotselected"))
         menus.get("themes").config(bg=menu_data.get("background"), fg=menu_data.get("foreground"))
         menus.get("languages").config(bg=menu_data.get("background"), fg=menu_data.get("foreground"))
 
