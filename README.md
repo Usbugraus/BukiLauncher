@@ -4,7 +4,7 @@
 BukiLauncher is a Minecraft launcher made in Python.
 
 ## Features
-- Mod manager
+- Built-in mod manager
 - Fabric, Forge, NeoForge and Quilt support
 - Multi-language support
 - UUID and JVM arguments editing feature
